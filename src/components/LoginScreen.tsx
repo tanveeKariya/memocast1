@@ -38,7 +38,7 @@ export const LoginScreen: React.FC = () => {
         if (window.google) {
           try {
             window.google.accounts.id.initialize({
-              client_id: '283355615750-9ttqf39s631b338nn25nuob33uedm3u2.apps.googleusercontent.com',
+              client_id: '283355615750-l8u04tnk65dv48stlvn5avjms3rvf4n3.apps.googleusercontent.com',
               callback: handleGoogleResponse,
               auto_select: false,
               cancel_on_tap_outside: true,

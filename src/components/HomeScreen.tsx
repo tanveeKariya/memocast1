@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  Plus, 
-  FileText, 
-  GraduationCap, 
-  Briefcase, 
-  FolderOpen, 
+import {
+  Plus,
+  FileText,
+  GraduationCap,
+  Briefcase,
+  FolderOpen,
   Home,
   Upload,
   MoreHorizontal,
@@ -101,7 +101,7 @@ export const HomeScreen: React.FC = () => {
         foldersAPI.getFolders(),
         personalitiesAPI.getPersonalities()
       ]);
-      
+
       setNotes(notesRes.data);
       setFolders(foldersRes.data);
       setPersonalities(personalitiesRes.data);
@@ -185,13 +185,13 @@ export const HomeScreen: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center">
-        <motion.div 
+        <motion.div
           className="text-center"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <motion.div 
+          <motion.div
             className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
@@ -205,7 +205,7 @@ export const HomeScreen: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
       {/* Header */}
-      <motion.div 
+      <motion.div
         className="px-6 pt-12 pb-6"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -233,7 +233,7 @@ export const HomeScreen: React.FC = () => {
               <p className="text-sm text-gray-600">Welcome {user?.username}</p>
             </div>
           </motion.button>
-          
+
           <div className="flex items-center space-x-3">
             <motion.button
               onClick={() => setShowSearch(!showSearch)}
@@ -255,7 +255,7 @@ export const HomeScreen: React.FC = () => {
         </div>
 
         {/* Available Space Card */}
-        <motion.div 
+        <motion.div
           className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl p-6 mb-6 text-white"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -275,7 +275,7 @@ export const HomeScreen: React.FC = () => {
         {/* Search Bar */}
         <AnimatePresence>
           {showSearch && (
-            <motion.div 
+            <motion.div
               className="mb-6"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
@@ -296,7 +296,7 @@ export const HomeScreen: React.FC = () => {
 
         {/* Back to All Button */}
         {selectedFolder && (
-          <motion.div 
+          <motion.div
             className="mb-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -319,55 +319,68 @@ export const HomeScreen: React.FC = () => {
           </motion.div>
         )}
 
-        {/* Identity Selector */}
+        {/* Identity Selector and new "Create New Project" button */}
         {personalities.length > 0 && !selectedFolder && (
-          <motion.div 
-            className="mb-6"
+          <motion.div
+            className="mb-6 flex items-end justify-between" // Added flex, items-end, justify-between
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <p className="text-gray-600 text-sm mb-3">Your Identity</p>
-            <div className="flex items-center space-x-3 overflow-x-auto pb-2">
-              {personalities.map((personality, index) => (
+            {/* Existing Identity Selector */}
+            <div>
+              <p className="text-gray-600 text-sm mb-3">Your Identity</p>
+              <div className="flex items-center space-x-3 overflow-x-auto pb-2">
+                {personalities.map((personality, index) => (
+                  <motion.button
+                    key={personality._id}
+                    onClick={() => handlePersonalityFilter(personality._id)}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all whitespace-nowrap ${
+                      selectedPersonality === personality._id
+                        ? 'bg-purple-600 text-white shadow-lg'
+                        : user?.currentPersonality?._id === personality._id
+                        ? 'bg-purple-100 text-purple-600 border-2 border-purple-300'
+                        : 'bg-white/80 text-gray-700 hover:bg-white'
+                    }`}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <span>{personality.icon}</span>
+                    <span className="font-medium">{personality.name}</span>
+                    {user?.currentPersonality?._id === personality._id && (
+                      <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">Active</span>
+                    )}
+                  </motion.button>
+                ))}
                 <motion.button
-                  key={personality._id}
-                  onClick={() => handlePersonalityFilter(personality._id)}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all whitespace-nowrap ${
-                    selectedPersonality === personality._id
-                      ? 'bg-purple-600 text-white shadow-lg'
-                      : user?.currentPersonality?._id === personality._id
-                      ? 'bg-purple-100 text-purple-600 border-2 border-purple-300'
-                      : 'bg-white/80 text-gray-700 hover:bg-white'
-                  }`}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowCreatePersonality(true)}
+                  className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-all flex-shrink-0"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                 >
-                  <span>{personality.icon}</span>
-                  <span className="font-medium">{personality.name}</span>
-                  {user?.currentPersonality?._id === personality._id && (
-                    <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">Active</span>
-                  )}
+                  <Plus className="w-4 h-4 text-gray-600" />
                 </motion.button>
-              ))}
-              <motion.button 
-                onClick={() => setShowCreatePersonality(true)}
-                className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-all flex-shrink-0"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <Plus className="w-4 h-4 text-gray-600" />
-              </motion.button>
+              </div>
             </div>
+
+            {/* NEW "Create New Project" button for the header */}
+            <motion.button
+              onClick={() => setShowCreateFolder(true)}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-full shadow-lg hover:from-purple-700 hover:to-blue-700 transition-all font-semibold whitespace-nowrap"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Create New Project
+            </motion.button>
           </motion.div>
         )}
 
         {/* View Toggle */}
         {!selectedFolder && (
-          <motion.div 
+          <motion.div
             className="flex bg-white/80 backdrop-blur-sm rounded-xl p-1 mb-6 w-fit"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -376,8 +389,8 @@ export const HomeScreen: React.FC = () => {
             <button
               onClick={() => setView('folders')}
               className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                view === 'folders' 
-                  ? 'bg-purple-600 text-white shadow-md' 
+                view === 'folders'
+                  ? 'bg-purple-600 text-white shadow-md'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
@@ -386,8 +399,8 @@ export const HomeScreen: React.FC = () => {
             <button
               onClick={() => setView('notes')}
               className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                view === 'notes' 
-                  ? 'bg-purple-600 text-white shadow-md' 
+                view === 'notes'
+                  ? 'bg-purple-600 text-white shadow-md'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
@@ -408,19 +421,19 @@ export const HomeScreen: React.FC = () => {
             >
               {filteredFolders.length === 0 ? (
                 /* Empty State */
-                <motion.div 
+                <motion.div
                   className="text-center py-16"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
                 >
-                  <motion.div 
+                  <motion.div
                     className="w-64 h-48 mx-auto mb-8 bg-gradient-to-br from-purple-100 to-blue-100 rounded-3xl flex items-center justify-center"
-                    animate={{ 
+                    animate={{
                       y: [0, -10, 0],
                       rotate: [0, 2, -2, 0]
                     }}
-                    transition={{ 
+                    transition={{
                       duration: 4,
                       repeat: Infinity,
                       ease: "easeInOut"
@@ -435,14 +448,16 @@ export const HomeScreen: React.FC = () => {
                     {searchQuery || selectedPersonality ? 'Try adjusting your search or filter' : 'Create your first project to organize your notes'}
                   </p>
                   {!searchQuery && !selectedPersonality && (
-                    <motion.button
-                      onClick={() => setShowCreateFolder(true)}
-                      className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-2xl hover:from-purple-700 hover:to-blue-700 transition-all font-semibold"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      Create New Project
-                    </motion.button>
+                    <div className="flex justify-center my-4">
+                      {/* <motion.button
+                        onClick={() => setShowCreateFolder(true)}
+                        className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-full shadow-lg hover:from-purple-700 hover:to-blue-700 transition-all font-semibold"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        ➕ Create New Project
+                      </motion.button> */}
+                    </div>
                   )}
                 </motion.div>
               ) : (
@@ -481,9 +496,9 @@ export const HomeScreen: React.FC = () => {
                           >
                             <MoreHorizontal className="w-5 h-5 text-gray-400" />
                           </motion.button>
-                          
+
                           {showFolderMenu === folder._id && (
-                            <motion.div 
+                            <motion.div
                               className="absolute right-0 top-12 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-10"
                               initial={{ opacity: 0, scale: 0.9 }}
                               animate={{ opacity: 1, scale: 1 }}
@@ -551,7 +566,7 @@ export const HomeScreen: React.FC = () => {
               </div>
 
               {filteredNotes.length === 0 ? (
-                <motion.div 
+                <motion.div
                   className="text-center py-16"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -636,7 +651,7 @@ export const HomeScreen: React.FC = () => {
       </motion.button>
 
       {/* Bottom Navigation */}
-      <motion.div 
+      <motion.div
         className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 px-6 py-4"
         initial={{ y: 100 }}
         animate={{ y: 0 }}
@@ -648,7 +663,7 @@ export const HomeScreen: React.FC = () => {
             <span className="text-xs text-purple-600 font-medium">Home</span>
             <div className="w-6 h-1 bg-purple-600 rounded-full"></div>
           </button>
-          <button 
+          <button
             onClick={() => setShowPublishModal(true)}
             className="flex flex-col items-center space-y-1"
           >

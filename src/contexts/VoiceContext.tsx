@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+} from 'react';
 
 interface VoiceContextType {
   isRecording: boolean;
@@ -26,27 +33,29 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
-  
+
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
+  const uniqueSegments = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = true;
       recognitionRef.current.interimResults = true;
       recognitionRef.current.lang = 'en-US';
 
       recognitionRef.current.onresult = (event) => {
-        let finalTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
           if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
+            const newSegment = event.results[i][0].transcript.trim();
+            if (!uniqueSegments.current.has(newSegment)) {
+              uniqueSegments.current.add(newSegment);
+              setTranscript((prev) => prev + newSegment + ' ');
+            }
           }
-        }
-        if (finalTranscript) {
-          setTranscript(prev => prev + finalTranscript + ' ');
         }
       };
 
@@ -76,6 +85,8 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (recognitionRef.current && !isRecording) {
       setIsRecording(true);
       setError(null);
+      uniqueSegments.current.clear(); // reset previously spoken segments
+      setTranscript(''); // optional: clear transcript on new recording
       recognitionRef.current.start();
     }
   }, [isRecording]);
@@ -98,6 +109,7 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const clearTranscript = useCallback(() => {
     setTranscript('');
+    uniqueSegments.current.clear();
   }, []);
 
   const value: VoiceContextType = {
@@ -108,7 +120,7 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     stopRecording,
     speakText,
     clearTranscript,
-    error
+    error,
   };
 
   return (

@@ -12,7 +12,7 @@ import axios from 'axios';
 const router = express.Router();
 
 // Initialize Google OAuth client
-const googleClient = new OAuth2Client('283355615750-9ttqf39s631b338nn25nuob33uedm3u2.apps.googleusercontent.com');
+const googleClient = new OAuth2Client('283355615750-l8u04tnk65dv48stlvn5avjms3rvf4n3.apps.googleusercontent.com');
 
 // Demo login
 router.post('/demo-login', async (req, res) => {
@@ -76,7 +76,7 @@ router.post('/google-login', async (req, res) => {
     
     const ticket = await googleClient.verifyIdToken({
       idToken: credential,
-      audience: '283355615750-9ttqf39s631b338nn25nuob33uedm3u2.apps.googleusercontent.com',
+      audience: '283355615750-l8u04tnk65dv48stlvn5avjms3rvf4n3.apps.googleusercontent.com',
     });
     
     const payload = ticket.getPayload();

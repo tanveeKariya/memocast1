@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn OAuth Callback</title>
+</head>
+<body>
+    <div style="text-align: center; padding: 50px;">
+        <h2>Processing LinkedIn authentication...</h2>
+        <p>Please wait while we complete your login.</p>
+    </div>
+    
+    <script>
+        // Extract code from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const state = urlParams.get('state');
+        const error = urlParams.get('error');
+        
+        if (error) {
+            alert('LinkedIn authentication failed: ' + error);
+            window.close();
+        } else if (code && state === 'linkedin_auth') {
+            // Redirect back to main app with the code
+            window.location.href = `${window.location.origin}?code=${code}&state=${state}`;
+        } else {
+            // Invalid callback
+            alert('Invalid LinkedIn callback');
+            window.close();
+        }
+    </script>
+</body>
+</html>

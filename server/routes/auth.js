@@ -1,0 +1,32 @@
+import express from 'express';
+import { auth } from '../middleware/auth.js';
+import {
+  demoLogin,
+  googleLogin,
+  register,
+  login,
+  getMe,
+  updateProfile,
+  updatePreferences,
+  changePassword,
+  exportData,
+  deleteAccount
+} from '../controllers/authController.js';
+
+const router = express.Router();
+
+// Authentication routes
+router.post('/demo-login', demoLogin);
+router.post('/google-login', googleLogin);
+router.post('/register', register);
+router.post('/login', login);
+
+// Protected routes
+router.get('/me', auth, getMe);
+router.put('/profile', auth, updateProfile);
+router.put('/preferences', auth, updatePreferences);
+router.put('/password', auth, changePassword);
+router.get('/export', auth, exportData);
+router.delete('/account', auth, deleteAccount);
+
+export default router;

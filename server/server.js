@@ -21,10 +21,22 @@ console.log(`Attempting to start server on port: ${PORT}`);
 // Security middleware
 console.log('Configuring security middleware (helmet, cors, rateLimit)...');
 app.use(helmet());
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://memocast.netlify.app'
+];
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'https://memocast.netlify.app',
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('❌ CORS policy: This origin is not allowed'));
+    }
+  },
   credentials: true
 }));
+
 console.log(`CORS origin set to: ${process.env.CLIENT_URL || 'https://memocast.netlify.app'}`);
 
 // Rate limiting

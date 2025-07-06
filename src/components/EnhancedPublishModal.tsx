@@ -9,9 +9,9 @@ interface EnhancedPublishModalProps {
   title?: string;
 }
 
-export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
-  isOpen,
-  onClose,
+export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({ 
+  isOpen, 
+  onClose, 
   content = '',
   title = ''
 }) => {
@@ -35,23 +35,23 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
   const [showPortfolioOptions, setShowPortfolioOptions] = useState(false);
 
   const platforms = [
-    {
-      id: 'linkedin',
-      name: 'LinkedIn',
+    { 
+      id: 'linkedin', 
+      name: 'LinkedIn', 
       icon: '💼',
       description: 'Professional networking',
       maxLength: 3000
     },
-    {
-      id: 'twitter',
-      name: 'Twitter',
+    { 
+      id: 'twitter', 
+      name: 'Twitter', 
       icon: '🐦',
       description: 'Short-form social media',
       maxLength: 280
     },
-    {
-      id: 'instagram',
-      name: 'Instagram',
+    { 
+      id: 'instagram', 
+      name: 'Instagram', 
       icon: '📸',
       description: 'Visual storytelling',
       maxLength: 2200
@@ -70,8 +70,6 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
       setCombinedContent('');
       setSearchQuery('');
       setShowPortfolioOptions(false);
-      setSelectedPlatform('linkedin'); // Reset selected platform on open
-      setPortfolioType('portfolio'); // Reset portfolio type on open
     }
   }, [isOpen]);
 
@@ -92,19 +90,17 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
       const [personalitiesRes] = await Promise.all([
         personalitiesAPI.getPersonalities()
       ]);
-
+      
       setPersonalities(personalitiesRes.data);
     } catch (error) {
       console.error('Error loading data:', error);
-      // Optionally set an error state to display to the user
     }
   };
 
   const loadProjectsForPersonality = async (personalityId: string) => {
     try {
       const response = await notesAPI.getNotes();
-      // Assuming notes come with a folderId property that can be null or an object with _id and name
-      const userNotes = response.data.filter((note: any) => note.personalityId?._id === personalityId);
+      const userNotes = response.data.filter((note: any) => note.personalityId._id === personalityId);
       const projects = userNotes.reduce((acc: any[], note: any) => {
         if (note.folderId && !acc.find(p => p._id === note.folderId._id)) {
           acc.push(note.folderId);
@@ -119,10 +115,9 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
 
   const loadNotesForProject = async (projectId: string) => {
     try {
-      // Ensure both folderId and personalityId are sent if needed by your API
-      const response = await notesAPI.getNotes({
+      const response = await notesAPI.getNotes({ 
         folderId: projectId,
-        personalityId: selectedPersonality
+        personalityId: selectedPersonality 
       });
       setAvailableNotes(response.data);
       setFilteredNotes(response.data);
@@ -133,38 +128,29 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
 
   const handlePersonalitySelect = (personalityId: string) => {
     setSelectedPersonality(personalityId);
-    setSelectedProject(''); // Reset project when personality changes
-    setAvailableProjects([]); // Clear projects for new personality
-    setAvailableNotes([]); // Clear notes
-    setSelectedNotes([]); // Clear selected notes
-    if (personalityId) { // Only load if a personality is actually selected
-      loadProjectsForPersonality(personalityId);
-    }
+    setSelectedProject('');
+    setAvailableNotes([]);
+    setSelectedNotes([]);
+    loadProjectsForPersonality(personalityId);
   };
 
   const handleProjectSelect = (projectId: string) => {
     setSelectedProject(projectId);
-    setSelectedNotes([]); // Clear selected notes when project changes
-    setAvailableNotes([]); // Clear notes
-    if (projectId) { // Only load if a project is actually selected
-      loadNotesForProject(projectId);
-    }
+    setSelectedNotes([]);
+    loadNotesForProject(projectId);
   };
 
   const handleNoteSelection = (noteId: string) => {
-    setSelectedNotes(prev =>
-      prev.includes(noteId)
+    setSelectedNotes(prev => 
+      prev.includes(noteId) 
         ? prev.filter(id => id !== noteId)
         : [...prev, noteId]
     );
   };
 
   const handleFormSubmit = () => {
-    if (!publishName.trim() || !selectedPersonality || selectedNotes.length === 0) {
-      alert('Please fill in all required fields: Publish Name, Ego, and select at least one Note.');
-      return;
-    }
-
+    if (!publishName.trim() || !selectedPersonality || selectedNotes.length === 0) return;
+    
     const selected = availableNotes.filter(note => selectedNotes.includes(note._id));
     const combined = selected.map(note => `${note.title}\n\n${note.content}`).join('\n\n---\n\n');
     setCombinedContent(combined);
@@ -172,53 +158,59 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
   };
 
   const handleEnhance = async () => {
-    if (!combinedContent) {
-      alert('No content to enhance. Please select notes.');
-      return;
-    }
-
     setIsEnhancing(true);
     try {
       let enhanceType = 'social';
-      let prompt = ''; // The prompt sent to the backend might be based on `enhanceType` and `format`
+      let prompt = '';
 
       if (showPortfolioOptions) {
         enhanceType = 'portfolio';
-        // The backend `notesAPI.enhanceContent` should handle the actual AI prompt
-        // based on `enhanceType` and `format` ('portfolio', 'resume', 'biodata')
+        prompt = `Generate a ${portfolioType} in the following format based on this content`;
       } else {
-        enhanceType = 'social';
-        // The backend `notesAPI.enhanceContent` should handle the actual AI prompt
-        // based on `enhanceType` and `platform` ('linkedin', 'twitter', 'instagram')
+        prompt = `Combine these files with proper formatting and make necessary changes for better readability and flow. Maintain the original meaning while improving structure for ${selectedPlatform} platform.`;
       }
 
       const response = await notesAPI.enhanceContent({
         content: combinedContent,
-        enhanceType: enhanceType, // Pass enhanceType to backend
+        enhanceType,
         personalityId: selectedPersonality,
-        format: showPortfolioOptions ? portfolioType : undefined, // Send portfolioType if portfolio
-        platform: !showPortfolioOptions ? selectedPlatform : undefined // Send selectedPlatform if social
+        format: showPortfolioOptions ? portfolioType : undefined
       });
-
+      
       let enhanced = response.data.enhancedContent;
-
-      // Frontend-side additions (optional, usually done by backend for consistency)
+      
       if (!showPortfolioOptions) {
+        // Platform-specific enhancements
         if (selectedPlatform === 'linkedin') {
-          enhanced = `🚀 ${publishName || 'Professional Update'}\n\n${enhanced}\n\nKey insights:\n• Professional growth through innovation\n• Building meaningful connections\n• Sharing knowledge with the community\n\nWhat are your thoughts on this? I'd love to hear your perspective in the comments below.\n\n#Professional #Growth #Innovation #Networking`;
+          enhanced = `🚀 ${publishName || 'Professional Update'}
+
+${enhanced}
+
+Key insights:
+• Professional growth through innovation
+• Building meaningful connections
+• Sharing knowledge with the community
+
+What are your thoughts on this? I'd love to hear your perspective in the comments below.
+
+#Professional #Growth #Innovation #Networking`;
         } else if (selectedPlatform === 'twitter') {
-          const twitterMaxLength = platforms.find(p => p.id === 'twitter')?.maxLength || 280;
-          enhanced = enhanced.substring(0, twitterMaxLength - 50) + (enhanced.length > (twitterMaxLength - 50) ? '...' : '') + '\n\n#Innovation #Growth'; // Leave room for hashtags
-        } else if (selectedPlatform === 'instagram') {
-          enhanced = `✨ ${publishName || 'Creative Update'}\n\n${enhanced}\n\nSwipe to see more insights! 👉\n\n#Creative #Inspiration #Growth #Mindset`;
+          enhanced = enhanced.substring(0, 250) + (enhanced.length > 250 ? '...' : '') + '\n\n#Innovation #Growth';
+        } else {
+          enhanced = `✨ ${publishName || 'Creative Update'}
+
+${enhanced}
+
+Swipe to see more insights! 👉
+
+#Creative #Inspiration #Growth #Mindset`;
         }
       }
-
+      
       setEnhancedContent(enhanced);
       setStep('review');
     } catch (error) {
       console.error('Enhancement error:', error);
-      alert('Failed to enhance content. Please try again.'); // User feedback
     } finally {
       setIsEnhancing(false);
     }
@@ -234,18 +226,17 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
     try {
       await draftsAPI.createDraft({
         title: publishName || 'Untitled Draft',
-        content: enhancedContent || combinedContent, // Save enhanced or original if skipped
+        content: enhancedContent,
         type: showPortfolioOptions ? portfolioType : 'social',
-        platform: showPortfolioOptions ? 'general' : selectedPlatform, // 'general' for portfolio types
+        platform: showPortfolioOptions ? 'general' : selectedPlatform,
         personalityId: selectedPersonality,
         originalNotes: selectedNotes
       });
-
+      
       onClose();
       resetModal();
     } catch (error) {
       console.error('Error saving draft:', error);
-      alert('Failed to save draft. Please try again.'); // User feedback
     } finally {
       setIsSavingDraft(false);
     }
@@ -253,39 +244,30 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
 
   const handlePublish = async () => {
     setIsPublishing(true);
-    let clipboardSuccess = false;
     try {
-      // 1. Copy content to clipboard
+      // Copy content to clipboard
       await navigator.clipboard.writeText(enhancedContent);
-      clipboardSuccess = true;
-
-      // 2. Determine platform-specific action
-      let redirectTarget = '';
-      let apiResponse;
-
+      
+      let response;
+      
       if (selectedPlatform === 'linkedin') {
-        // Call backend API which might initiate OAuth or return a direct share URL
-        apiResponse = await authAPI.linkedinPost({ content: enhancedContent });
-        redirectTarget = apiResponse.data.redirectUrl || 'https://www.linkedin.com/feed/';
+        response = await authAPI.linkedinPost({ content: enhancedContent });
+        if (response.data.redirectUrl) {
+          window.open(response.data.redirectUrl, '_blank');
+        } else {
+          window.open('https://www.linkedin.com/feed/', '_blank');
+        }
       } else if (selectedPlatform === 'twitter') {
-        // Call backend API for Twitter, it might return a pre-filled tweet URL
-        apiResponse = await authAPI.twitterPost({ content: enhancedContent });
-        redirectTarget = apiResponse.data.redirectUrl || `https://twitter.com/intent/tweet?text=${encodeURIComponent(enhancedContent)}`;
-      } else if (selectedPlatform === 'instagram') {
-        // Instagram usually doesn't allow direct text posting via API for users,
-        // so we just open the app/web and ask the user to paste.
-        redirectTarget = 'https://www.instagram.com/';
-      }
-
-      // 3. Open the target URL
-      if (redirectTarget) {
-        window.open(redirectTarget, '_blank');
+        response = await authAPI.twitterPost({ content: enhancedContent });
+        if (response.data.redirectUrl) {
+          window.open(response.data.redirectUrl, '_blank');
+        }
       } else {
-        // Fallback if no specific redirect was found or necessary
-        alert('Content copied to clipboard! Please open your social media app and paste it manually.');
+        response = await authAPI.instagramPost({ content: enhancedContent });
+        window.open('https://www.instagram.com/', '_blank');
       }
-
-      // 4. Save as published draft
+      
+      // Save as published draft
       await draftsAPI.createDraft({
         title: publishName || 'Published Post',
         content: enhancedContent,
@@ -296,23 +278,15 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
         isPublished: true,
         publishedAt: new Date()
       });
-
+      
       setStep('publish');
-      // Close modal after a short delay to show success message
       setTimeout(() => {
         onClose();
         resetModal();
       }, 2000);
-
-    } catch (err: any) {
-      console.error('Publishing error:', err);
-      if (clipboardSuccess) {
-        alert('Content copied to clipboard! Please open your social media app/web and paste it manually.');
-      } else {
-        alert('Failed to copy content to clipboard. Please try again.');
-      }
-      // Stay on the review step if publishing fails so user can still copy manually
-      setStep('review');
+    } catch (error) {
+      console.error('Publishing error:', error);
+      alert('Content copied to clipboard! Please paste it in the social media platform.');
     } finally {
       setIsPublishing(false);
     }
@@ -324,15 +298,10 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
     setSelectedPersonality('');
     setSelectedProject('');
     setSelectedNotes([]);
-    setAvailableProjects([]); // Clear available projects
-    setAvailableNotes([]); // Clear available notes
-    setPersonalities([]); // Clear personalities (will reload on next open)
     setEnhancedContent('');
     setCombinedContent('');
     setSearchQuery('');
     setShowPortfolioOptions(false);
-    setSelectedPlatform('linkedin');
-    setPortfolioType('portfolio');
   };
 
   if (!isOpen) return null;
@@ -420,7 +389,7 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Choose notes/Files
                   </label>
-
+                  
                   <div className="relative mb-3">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
@@ -433,33 +402,29 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
                   </div>
 
                   <div className="max-h-48 overflow-y-auto space-y-2 border border-gray-300 rounded-xl p-3">
-                    {filteredNotes.length > 0 ? (
-                      filteredNotes.map((note) => (
-                        <div
-                          key={note._id}
-                          className={`p-3 rounded-lg cursor-pointer transition-all ${
-                            selectedNotes.includes(note._id)
-                              ? 'bg-purple-50 border-purple-300 border-2'
-                              : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
-                          }`}
-                          onClick={() => handleNoteSelection(note._id)}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="font-medium text-gray-900">{note.title}</h4>
-                              <p className="text-sm text-gray-600 line-clamp-1">
-                                {note.content.substring(0, 50)}...
-                              </p>
-                            </div>
-                            {selectedNotes.includes(note._id) && (
-                              <Check className="w-5 h-5 text-purple-600" />
-                            )}
+                    {filteredNotes.map((note) => (
+                      <div 
+                        key={note._id}
+                        className={`p-3 rounded-lg cursor-pointer transition-all ${
+                          selectedNotes.includes(note._id)
+                            ? 'bg-purple-50 border-purple-300 border-2'
+                            : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                        }`}
+                        onClick={() => handleNoteSelection(note._id)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium text-gray-900">{note.title}</h4>
+                            <p className="text-sm text-gray-600 line-clamp-1">
+                              {note.content.substring(0, 50)}...
+                            </p>
                           </div>
+                          {selectedNotes.includes(note._id) && (
+                            <Check className="w-5 h-5 text-purple-600" />
+                          )}
                         </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 text-sm text-center py-4">No notes found for this project.</p>
-                    )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -473,7 +438,7 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
                 disabled={!publishName.trim() || !selectedPersonality || selectedNotes.length === 0}
                 className="w-full bg-purple-600 text-white py-3 rounded-xl hover:bg-purple-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Next: Enhance Content
+                Publish now
               </button>
             </div>
           )}
@@ -489,7 +454,7 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
                   Back
                 </button>
               </div>
-
+              
               <div className="bg-gray-50 rounded-xl p-4 max-h-32 overflow-y-auto">
                 <p className="text-gray-700 text-sm">{combinedContent}</p>
               </div>
@@ -608,7 +573,7 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
                   Back
                 </button>
               </div>
-
+              
               <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-4 border border-purple-200">
                 <textarea
                   value={enhancedContent}
@@ -622,10 +587,7 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
                   {showPortfolioOptions ? `Type: ${portfolioType}` : `Platform: ${platforms.find(p => p.id === selectedPlatform)?.name}`}
                 </span>
                 <span className="text-sm text-gray-500">
-                  {enhancedContent.length} characters {
-                    !showPortfolioOptions && platforms.find(p => p.id === selectedPlatform) &&
-                    ` / ${platforms.find(p => p.id === selectedPlatform)?.maxLength}`
-                  }
+                  {enhancedContent.length} characters
                 </span>
               </div>
 
@@ -647,7 +609,7 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
                     </>
                   )}
                 </button>
-                {!showPortfolioOptions && ( // Only show Publish Now for social posts
+                {!showPortfolioOptions && (
                   <button
                     onClick={handlePublish}
                     disabled={isPublishing}
@@ -676,11 +638,7 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
                 <Share2 className="w-10 h-10 text-green-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Successfully Published!</h3>
-              <p className="text-gray-600">Your content has been shared {
-                !showPortfolioOptions && platforms.find(p => p.id === selectedPlatform)
-                  ? `to ${platforms.find(p => p.id === selectedPlatform)?.name}`
-                  : 'to your clipboard for manual paste'
-              }.</p>
+              <p className="text-gray-600">Your content has been shared to {platforms.find(p => p.id === selectedPlatform)?.name}</p>
             </div>
           )}
         </div>

@@ -5,6 +5,7 @@ import { notesAPI, foldersAPI, personalitiesAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useVoice } from '../contexts/VoiceContext';
 import Tesseract from 'tesseract.js';
+import { extractTextFromFile } from '../components/fileTextExtractor';
 
 interface AddNoteModalProps {
   isOpen: boolean;
@@ -74,41 +75,75 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    
-    for (const file of files) {
-      setShowFileOptions(file);
-    }
-  };
-
-  const processTextFile = async (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
-      setContent(prev => prev + (prev ? '\n\n' : '') + text);
-    };
-    reader.readAsText(file);
-  };
-
-  const extractTextFromFile = async (file: File) => {
-    setProcessingFiles(true);
+  const files = Array.from(event.target.files || []);
+  for (const file of files) {
     try {
-      if (file.type.startsWith('image/')) {
-        const result = await Tesseract.recognize(file, 'eng');
-        setContent(prev => prev + (prev ? '\n\n' : '') + result.data.text);
-      } else if (file.type.includes('text') || file.name.endsWith('.txt')) {
-        await processTextFile(file);
-      } else {
-        // For other document types, add to attachments for server-side processing
-        setUploadedFiles(prev => [...prev, file]);
-      }
-      setShowFileOptions(null);
+      const extractedText = await extractTextFromFile(file);
+      setContent((prev) => prev + (prev ? '\n\n' : '') + extractedText);
     } catch (error) {
       console.error('Error extracting text:', error);
-    } finally {
-      setProcessingFiles(false);
+      alert(`Could not extract text from ${file.name}`);
     }
-  };
+  }
+};
+
+
+  // const processTextFile = async (file: File) => {
+  //   const reader = new FileReader();
+  //   reader.onload = (e) => {
+  //     const text = e.target?.result as string;
+  //     setContent(prev => prev + (prev ? '\n\n' : '') + text);
+  //   };
+  //   reader.readAsText(file);
+  // };
+
+  // const extractTextFromFile = async (file: File) => {
+  //   setProcessingFiles(true);
+  //   try {
+  //     if (file.type.startsWith('image/')) {
+  //       const result = await Tesseract.recognize(file, 'eng');
+  //       setContent(prev => prev + (prev ? '\n\n' : '') + result.data.text);
+  //     } else if (file.type.includes('text') || file.name.endsWith('.txt')) {
+  //       await processTextFile(file);
+  //     } else {
+  //       // For other document types, add to attachments for server-side processing
+  //       setUploadedFiles(prev => [...prev, file]);
+  //     }
+  //     setShowFileOptions(null);
+  //   } catch (error) {
+  //     console.error('Error extracting text:', error);
+  //   } finally {
+  //     setProcessingFiles(false);
+  //   }
+  // };
+const extractTextFromFile = async (file: File): Promise<string> => {
+  try {
+    if (file.type.startsWith('image/')) {
+      // OCR using Tesseract for images
+      const result = await Tesseract.recognize(file, 'eng');
+      const extracted = result?.data?.text?.trim();
+      return extracted || '';
+    } else {
+      // Other documents: send to server for extraction
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('http://localhost:5000/api/extract-text', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      const extracted = data?.text?.trim();
+
+      return data.success && extracted ? extracted : '';
+    }
+  } catch (error) {
+    console.error('❌ Error extracting text from file:', error);
+    return '';
+  }
+};
+
 
   const saveFileAsAttachment = (file: File) => {
     setUploadedFiles(prev => [...prev, file]);

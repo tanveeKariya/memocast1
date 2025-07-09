@@ -9,7 +9,7 @@ import noteRoutes from './routes/notes.js';
 import folderRoutes from './routes/folders.js';
 import personalityRoutes from './routes/personalities.js';
 import draftRoutes from './routes/drafts.js';
-
+import uploadRoutes from './routes/upload.js';
 dotenv.config();
 console.log('--- Server Startup Log ---');
 console.log('Environment variables loaded.');
@@ -67,6 +67,8 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/memocast'
 });
 
 // Routes
+app.use('/api', uploadRoutes);
+
 console.log('Registering API routes...');
 app.use('/api/auth', (req, res, next) => {
   console.log(`➡️  Auth route hit: ${req.method} ${req.originalUrl}`);

@@ -14,9 +14,10 @@ import {
   Search,
   Edit3,
   Trash2,
-  Eye
+  Eye,
+  Share2
 } from 'lucide-react';
-import { notesAPI, foldersAPI, personalitiesAPI } from '../services/api';
+import { notesAPI, foldersAPI, personalitiesAPI, authAPI } from '../services/api';
 import { CreateFolderModal } from './CreateFolderModal';
 import { AddNoteModal } from './AddNoteModal';
 import { SettingsModal } from './SettingsModal';
@@ -63,6 +64,12 @@ interface Personality {
   color: string;
 }
 
+interface StorageStats {
+  used: number;
+  total: number;
+  percentage: number;
+}
+
 export const HomeScreen: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -82,9 +89,11 @@ export const HomeScreen: React.FC = () => {
   const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
   const [showFolderMenu, setShowFolderMenu] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [storageStats, setStorageStats] = useState<StorageStats>({ used: 0, total: 25, percentage: 0 });
 
   useEffect(() => {
     loadData();
+    loadStorageStats();
   }, []);
 
   useEffect(() => {
@@ -106,6 +115,15 @@ export const HomeScreen: React.FC = () => {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadStorageStats = async () => {
+    try {
+      const response = await authAPI.getStorageStats();
+      setStorageStats(response.data);
+    } catch (error) {
+      console.error('Error loading storage stats:', error);
     }
   };
 
@@ -164,10 +182,51 @@ export const HomeScreen: React.FC = () => {
       try {
         await foldersAPI.deleteFolder(folderId);
         loadData();
+        loadStorageStats();
         setShowFolderMenu(null);
       } catch (error) {
         console.error('Error deleting folder:', error);
       }
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (error) {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      return true;
+    }
+  };
+
+  const handleShareFolder = async (folder: Folder, platform: string) => {
+    try {
+      // Copy content to clipboard and redirect
+      await copyToClipboard(`📁 ${folder.name} - Shared from Memocast.co`);
+      
+      let response;
+      
+      if (platform === 'linkedin') {
+        response = await authAPI.linkedinPost({ content: `📁 ${folder.name} - Shared from Memocast.co` });
+      } else if (platform === 'twitter') {
+        response = await authAPI.twitterPost({ content: `📁 ${folder.name} - Shared from Memocast.co` });
+      } else if (platform === 'instagram') {
+        response = await authAPI.instagramPost({ content: `📁 ${folder.name} - Shared from Memocast.co` });
+      }
+      
+      if (response?.data.redirectUrl) {
+        window.open(response.data.redirectUrl, '_blank');
+      }
+      
+      setShowFolderMenu(null);
+    } catch (error) {
+      console.error('Error sharing folder:', error);
     }
   };
 
@@ -239,7 +298,15 @@ export const HomeScreen: React.FC = () => {
             </div>
             <div>
               <h3 className="text-xl font-bold">Available Space</h3>
-              <p className="text-white/80">20.254 GB of 25 GB Used</p>
+              <p className="text-white/80">
+                {storageStats.used.toFixed(2)} GB of {storageStats.total} GB Used
+              </p>
+              <div className="w-48 h-2 bg-white/20 rounded-full mt-2">
+                <div 
+                  className="h-full bg-white rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(storageStats.percentage, 100)}%` }}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -416,6 +483,41 @@ export const HomeScreen: React.FC = () => {
                               <Edit3 className="w-4 h-4 text-gray-500" />
                               <span>Edit</span>
                             </button>
+                            <div className="relative group">
+                              <button className="flex items-center space-x-2 px-4 py-2 hover:bg-gray-50 w-full text-left">
+                                <Share2 className="w-4 h-4 text-gray-500" />
+                                <span>Share</span>
+                              </button>
+                              <div className="absolute left-full top-0 ml-2 hidden group-hover:block bg-white border border-gray-200 rounded-lg shadow-lg p-2 min-w-[120px]">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleShareFolder(folder, 'linkedin');
+                                  }}
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm"
+                                >
+                                  LinkedIn
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleShareFolder(folder, 'twitter');
+                                  }}
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm"
+                                >
+                                  Twitter
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleShareFolder(folder, 'instagram');
+                                  }}
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm"
+                                >
+                                  Instagram
+                                </button>
+                              </div>
+                            </div>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -539,12 +641,18 @@ export const HomeScreen: React.FC = () => {
       <CreateFolderModal
         isOpen={showCreateFolder}
         onClose={() => setShowCreateFolder(false)}
-        onFolderCreated={loadData}
+        onFolderCreated={() => {
+          loadData();
+          loadStorageStats();
+        }}
       />
       <AddNoteModal
         isOpen={showAddNote}
         onClose={() => setShowAddNote(false)}
-        onNoteCreated={loadData}
+        onNoteCreated={() => {
+          loadData();
+          loadStorageStats();
+        }}
       />
       <SettingsModal
         isOpen={showSettings}

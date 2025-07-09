@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://memocast1.onrender.com//api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://memocast1.onrender.com0/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -56,6 +56,7 @@ export const authAPI = {
     api.put('/auth/password', data),
   exportData: () => api.get('/auth/export'),
   deleteAccount: () => api.delete('/auth/account'),
+  getStorageStats: () => api.get('/auth/storage-stats'),
 };
 
 export const notesAPI = {
@@ -70,6 +71,7 @@ export const notesAPI = {
   },
   updateNote: (id: string, note: any) => api.put(`/notes/${id}`, note),
   deleteNote: (id: string) => api.delete(`/notes/${id}`),
+  moveNote: (id: string, data: { folderId: string | null }) => api.put(`/notes/${id}/move`, data),
   enhanceNote: (id: string, data: { platform: string; personalityId: string; enhanceType?: string }) => 
     api.post(`/notes/${id}/enhance`, data),
   enhanceContent: (data: { content: string; enhanceType: string; personalityId?: string; format?: string }) =>
@@ -82,6 +84,7 @@ export const foldersAPI = {
   createFolder: (folder: any) => api.post('/folders', folder),
   updateFolder: (id: string, folder: any) => api.put(`/folders/${id}`, folder),
   deleteFolder: (id: string) => api.delete(`/folders/${id}`),
+  shareFolder: (id: string, data: { platform: string }) => api.post(`/folders/${id}/share`, data),
 };
 
 export const personalitiesAPI = {
@@ -98,6 +101,7 @@ export const draftsAPI = {
   updateDraft: (id: string, draft: any) => api.put(`/drafts/${id}`, draft),
   deleteDraft: (id: string) => api.delete(`/drafts/${id}`),
   publishDraft: (id: string) => api.post(`/drafts/${id}/publish`),
+  shareDraft: (id: string, data: { platform: string }) => api.post(`/drafts/${id}/share`, data),
 };
 
 export default api;

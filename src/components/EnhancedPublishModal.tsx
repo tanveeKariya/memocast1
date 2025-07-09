@@ -242,29 +242,40 @@ Swipe to see more insights! 👉
     }
   };
 
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (error) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      return true;
+    }
+  };
+
   const handlePublish = async () => {
     setIsPublishing(true);
     try {
-      // Copy content to clipboard
-      await navigator.clipboard.writeText(enhancedContent);
+      // Copy content to clipboard first
+      await copyToClipboard(enhancedContent);
       
       let response;
+      let redirectUrl = '';
       
       if (selectedPlatform === 'linkedin') {
         response = await authAPI.linkedinPost({ content: enhancedContent });
-        if (response.data.redirectUrl) {
-          window.open(response.data.redirectUrl, '_blank');
-        } else {
-          window.open('https://www.linkedin.com/feed/', '_blank');
-        }
+        redirectUrl = response.data.redirectUrl || 'https://www.linkedin.com/feed/';
       } else if (selectedPlatform === 'twitter') {
         response = await authAPI.twitterPost({ content: enhancedContent });
-        if (response.data.redirectUrl) {
-          window.open(response.data.redirectUrl, '_blank');
-        }
+        redirectUrl = response.data.redirectUrl || `https://twitter.com/intent/tweet?text=${encodeURIComponent(enhancedContent)}`;
       } else {
         response = await authAPI.instagramPost({ content: enhancedContent });
-        window.open('https://www.instagram.com/', '_blank');
+        redirectUrl = response.data.redirectUrl || 'https://www.instagram.com/';
       }
       
       // Save as published draft
@@ -279,11 +290,22 @@ Swipe to see more insights! 👉
         publishedAt: new Date()
       });
       
+      // Show success message
       setStep('publish');
+      
+      // Open social media platform after a short delay
       setTimeout(() => {
-        onClose();
-        resetModal();
-      }, 2000);
+        if (redirectUrl) {
+          window.open(redirectUrl, '_blank');
+        }
+        
+        // Close modal after redirect
+        setTimeout(() => {
+          onClose();
+          resetModal();
+        }, 1000);
+      }, 1500);
+      
     } catch (error) {
       console.error('Publishing error:', error);
       alert('Content copied to clipboard! Please paste it in the social media platform.');
@@ -638,7 +660,7 @@ Swipe to see more insights! 👉
                 <Share2 className="w-10 h-10 text-green-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Successfully Published!</h3>
-              <p className="text-gray-600">Your content has been shared to {platforms.find(p => p.id === selectedPlatform)?.name}</p>
+              <p className="text-gray-600">Your content has been copied to clipboard and you'll be redirected to {platforms.find(p => p.id === selectedPlatform)?.name}</p>
             </div>
           )}
         </div>

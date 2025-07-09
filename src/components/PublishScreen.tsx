@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, ChevronRight, FileText } from 'lucide-react';
+import { ArrowLeft, Plus, ChevronRight, FileText, Mic } from 'lucide-react';
 import { EnhancedPublishModal } from './EnhancedPublishModal';
 import { DraftsModal } from './DraftsModal';
 import { draftsAPI } from '../services/api';
@@ -63,6 +63,15 @@ export const PublishScreen: React.FC = () => {
             className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 rounded-2xl hover:from-purple-700 hover:to-blue-700 transition-all font-semibold"
           >
             Publish a New Portfolio
+          </button>
+
+          {/* Create Podcast Button - Coming Soon */}
+          <button
+            disabled
+            className="w-full bg-gray-300 text-gray-500 py-4 rounded-2xl font-semibold cursor-not-allowed flex items-center justify-center space-x-2"
+          >
+            <Mic className="w-5 h-5" />
+            <span>Create Podcast (coming soon)</span>
           </button>
 
           <button
@@ -160,7 +169,10 @@ export const PublishScreen: React.FC = () => {
       {/* Modals */}
       <EnhancedPublishModal
         isOpen={showPublishModal}
-        onClose={() => setShowPublishModal(false)}
+        onClose={() => {
+          setShowPublishModal(false);
+          loadPublishHistory(); // Refresh history when modal closes
+        }}
       />
       
       <DraftsModal

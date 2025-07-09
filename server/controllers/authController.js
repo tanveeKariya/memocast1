@@ -5,15 +5,19 @@ import Note from '../models/Note.js';
 import Folder from '../models/Folder.js';
 import Draft from '../models/Draft.js';
 import { OAuth2Client } from 'google-auth-library';
+import axios from 'axios';
 
-const googleClient = new OAuth2Client('283355615750-l8u04tnk65dv48stlvn5avjms3rvf4n3.apps.googleusercontent.com');
+// Initialize Google OAuth client
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Demo login
 export const demoLogin = async (req, res) => {
   try {
+    // Check if demo user exists
     let user = await User.findOne({ email: 'demo@memocast.co' });
     
     if (!user) {
+      // Create demo user
       user = new User({
         username: 'Demo User',
         email: 'demo@memocast.co',
@@ -22,6 +26,7 @@ export const demoLogin = async (req, res) => {
       });
       await user.save();
 
+      // Create default personality for demo user
       const defaultPersonality = new Personality({
         name: 'Default',
         icon: '👤',
@@ -67,7 +72,7 @@ export const googleLogin = async (req, res) => {
     
     const ticket = await googleClient.verifyIdToken({
       idToken: credential,
-      audience: '283355615750-l8u04tnk65dv48stlvn5avjms3rvf4n3.apps.googleusercontent.com'  ,
+      audience: process.env.GOOGLE_CLIENT_ID,
     });
     
     const payload = ticket.getPayload();
@@ -82,6 +87,7 @@ export const googleLogin = async (req, res) => {
     });
     
     if (!user) {
+      // Create new user
       user = new User({
         username: name,
         email,
@@ -91,6 +97,7 @@ export const googleLogin = async (req, res) => {
       });
       await user.save();
       
+      // Create default personality
       const defaultPersonality = new Personality({
         name: 'Default',
         icon: '👤',
@@ -104,11 +111,13 @@ export const googleLogin = async (req, res) => {
       user.currentPersonality = defaultPersonality._id;
       await user.save();
     } else if (!user.googleId) {
+      // Link existing account
       user.googleId = googleId;
       if (picture) user.avatar = picture;
       user.authProvider = 'google';
       await user.save();
     } else if (picture && picture !== user.avatar) {
+      // Update profile picture if changed
       user.avatar = picture;
       await user.save();
     }
@@ -133,11 +142,174 @@ export const googleLogin = async (req, res) => {
   }
 };
 
+// LinkedIn OAuth login
+export const linkedinLogin = async (req, res) => {
+  try {
+    const { code } = req.body;
+    
+    if (!code) {
+      return res.status(400).json({ message: 'No authorization code provided' });
+    }
+    
+    // Exchange code for access token
+    const tokenResponse = await axios.post('https://www.linkedin.com/oauth/v2/accessToken', 
+      new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        client_id: process.env.LINKEDIN_CLIENT_ID,
+        client_secret: process.env.LINKEDIN_CLIENT_SECRET,
+        redirect_uri: process.env.CLIENT_URL || 'https://memocast.netlify.app/linkedin-callback'
+      }), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        }
+      }
+    );
+    
+    const { access_token } = tokenResponse.data;
+    
+    if (!access_token) {
+      return res.status(400).json({ message: 'Failed to get access token from LinkedIn' });
+    }
+    
+    // Get user profile
+    const profileResponse = await axios.get('https://api.linkedin.com/v2/userinfo', {
+      headers: {
+        'Authorization': `Bearer ${access_token}`,
+        'Accept': 'application/json'
+      }
+    });
+    
+    const profile = profileResponse.data;
+    const linkedinId = profile.sub;
+    const email = profile.email;
+    const name = profile.name;
+    const picture = profile.picture;
+    
+    let user = await User.findOne({ 
+      $or: [{ email }, { linkedinId }] 
+    });
+    
+    if (!user) {
+      // Create new user
+      user = new User({
+        username: name,
+        email,
+        linkedinId,
+        avatar: picture || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150',
+        authProvider: 'linkedin',
+        linkedinAccessToken: access_token
+      });
+      await user.save();
+      
+      // Create default personality
+      const defaultPersonality = new Personality({
+        name: 'Professional',
+        icon: '💼',
+        color: '#0077B5',
+        description: 'Professional LinkedIn identity',
+        userId: user._id,
+        isDefault: true
+      });
+      await defaultPersonality.save();
+      
+      user.currentPersonality = defaultPersonality._id;
+      await user.save();
+    } else {
+      // Update existing user
+      user.linkedinId = linkedinId;
+      user.linkedinAccessToken = access_token;
+      if (picture && picture !== user.avatar) user.avatar = picture;
+      await user.save();
+    }
+    
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    
+    const userWithPersonality = await User.findById(user._id)
+      .populate('currentPersonality')
+      .select('-password');
+    
+    res.json({
+      token,
+      user: userWithPersonality
+    });
+  } catch (error) {
+    console.error('LinkedIn login error:', error);
+    res.status(500).json({ 
+      message: 'LinkedIn authentication failed: ' + (error.response?.data?.error_description || error.message)
+    });
+  }
+};
+
+// Post to LinkedIn
+export const linkedinPost = async (req, res) => {
+  try {
+    const { content } = req.body;
+    
+    // Copy content to clipboard and redirect
+    const linkedinUrl = 'https://www.linkedin.com/feed/';
+    
+    res.json({ 
+      success: true, 
+      redirectUrl: linkedinUrl,
+      content: content,
+      message: 'Content copied to clipboard. Redirecting to LinkedIn...'
+    });
+  } catch (error) {
+    console.error('LinkedIn post error:', error);
+    res.status(500).json({ message: 'Failed to post to LinkedIn' });
+  }
+};
+
+// Post to Twitter
+export const twitterPost = async (req, res) => {
+  try {
+    const { content } = req.body;
+    
+    // For Twitter, we'll redirect to Twitter's intent URL with prefilled content
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(content)}`;
+    
+    res.json({ 
+      success: true, 
+      redirectUrl: twitterUrl,
+      content: content,
+      message: 'Content copied to clipboard. Redirecting to Twitter...'
+    });
+  } catch (error) {
+    console.error('Twitter post error:', error);
+    res.status(500).json({ message: 'Failed to post to Twitter' });
+  }
+};
+
+// Post to Instagram
+export const instagramPost = async (req, res) => {
+  try {
+    const { content } = req.body;
+    
+    // For Instagram, we'll provide instructions to copy content
+    res.json({ 
+      success: true, 
+      redirectUrl: 'https://www.instagram.com/',
+      content: content,
+      message: 'Content copied to clipboard. Redirecting to Instagram...'
+    });
+  } catch (error) {
+    console.error('Instagram post error:', error);
+    res.status(500).json({ message: 'Failed to prepare Instagram post' });
+  }
+};
+
 // Register
 export const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
+    // Check if user exists
     const existingUser = await User.findOne({ 
       $or: [{ email }, { username }] 
     });
@@ -148,9 +320,11 @@ export const register = async (req, res) => {
       });
     }
 
+    // Create user
     const user = new User({ username, email, password });
     await user.save();
 
+    // Create default personality
     const defaultPersonality = new Personality({
       name: 'Default',
       icon: '👤',
@@ -237,6 +411,7 @@ export const updateProfile = async (req, res) => {
   try {
     const { username, email } = req.body;
     
+    // Check if email/username already exists for other users
     const existingUser = await User.findOne({
       $and: [
         { _id: { $ne: req.userId } },
@@ -329,6 +504,7 @@ export const exportData = async (req, res) => {
 // Delete account
 export const deleteAccount = async (req, res) => {
   try {
+    // Delete all user data
     await Promise.all([
       User.findByIdAndDelete(req.userId),
       Personality.deleteMany({ userId: req.userId }),
@@ -340,6 +516,33 @@ export const deleteAccount = async (req, res) => {
     res.json({ message: 'Account deleted successfully' });
   } catch (error) {
     console.error('Delete account error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get storage stats
+export const getStorageStats = async (req, res) => {
+  try {
+    const notes = await Note.find({ userId: req.userId });
+    const folders = await Folder.find({ userId: req.userId });
+    
+    // Calculate total size in MB
+    const totalNotesSize = notes.reduce((acc, note) => acc + (note.size || 0), 0);
+    const totalFoldersSize = folders.reduce((acc, folder) => acc + (folder.size || 0), 0);
+    const totalUsed = totalNotesSize + totalFoldersSize;
+    
+    // Convert to GB for display
+    const usedGB = totalUsed / 1000; // Convert MB to GB
+    const totalGB = 25; // 25GB total storage
+    
+    res.json({
+      used: usedGB,
+      total: totalGB,
+      usedMB: totalUsed,
+      percentage: (usedGB / totalGB) * 100
+    });
+  } catch (error) {
+    console.error('Get storage stats error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

@@ -13,9 +13,12 @@ import {
   FileText,
   File,
   Sparkles,
-  Paperclip
+  Paperclip,
+  FolderOpen,
+  ChevronDown,
+  X
 } from 'lucide-react';
-import { notesAPI } from '../services/api';
+import { notesAPI, foldersAPI } from '../services/api';
 import { useVoice } from '../contexts/VoiceContext';
 import { EnhancedPublishModal } from './EnhancedPublishModal';
 import jsPDF from 'jspdf';
@@ -37,6 +40,7 @@ interface Note {
     size: number;
   }>;
   folderId?: {
+    _id: string;
     name: string;
     color: string;
   };
@@ -46,6 +50,12 @@ interface Note {
     icon: string;
     color: string;
   };
+}
+
+interface Folder {
+  _id: string;
+  name: string;
+  category: string;
 }
 
 export const NoteEditor: React.FC = () => {
@@ -62,6 +72,9 @@ export const NoteEditor: React.FC = () => {
   const [enhancing, setEnhancing] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [selectedFolder, setSelectedFolder] = useState('');
 
   // Dummy images for demonstration
   const dummyImages = [
@@ -73,6 +86,7 @@ export const NoteEditor: React.FC = () => {
   useEffect(() => {
     if (id) {
       loadNote();
+      loadFolders();
     }
   }, [id]);
 
@@ -89,10 +103,20 @@ export const NoteEditor: React.FC = () => {
       setNote(noteData);
       setTitle(noteData.title);
       setContent(noteData.content);
+      setSelectedFolder(noteData.folderId?._id || '');
     } catch (error) {
       console.error('Error loading note:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFolders = async () => {
+    try {
+      const response = await foldersAPI.getFolders();
+      setFolders(response.data);
+    } catch (error) {
+      console.error('Error loading folders:', error);
     }
   };
 
@@ -111,6 +135,18 @@ export const NoteEditor: React.FC = () => {
       console.error('Error saving note:', error);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleMoveNote = async () => {
+    if (!note) return;
+    
+    try {
+      await notesAPI.moveNote(note._id, { folderId: selectedFolder || null });
+      setShowMoveModal(false);
+      await loadNote();
+    } catch (error) {
+      console.error('Error moving note:', error);
     }
   };
 
@@ -244,6 +280,12 @@ export const NoteEditor: React.FC = () => {
             {isEditing ? 'Edit Note' : 'View Note'}
           </h1>
           <div className="flex space-x-2">
+            <button
+              onClick={() => setShowMoveModal(true)}
+              className="p-2 rounded-full bg-blue-500 text-white shadow-md hover:shadow-lg transition-all"
+            >
+              <FolderOpen className="w-6 h-6" />
+            </button>
             <button
               onClick={() => setShowPublishModal(true)}
               className="p-2 rounded-full bg-green-500 text-white shadow-md hover:shadow-lg transition-all"
@@ -497,6 +539,59 @@ export const NoteEditor: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Move Note Modal */}
+      {showMoveModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">Move Note</h2>
+              <button
+                onClick={() => setShowMoveModal(false)}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-6 h-6 text-gray-600" />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Project
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedFolder}
+                  onChange={(e) => setSelectedFolder(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none pr-10 bg-white text-gray-900"
+                >
+                  <option value="">No Project</option>
+                  {folders.map((folder) => (
+                    <option key={folder._id} value={folder._id}>
+                      {folder.name} ({folder.category})
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              </div>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={handleMoveNote}
+                className="flex-1 bg-purple-600 text-white py-3 rounded-xl hover:bg-purple-700 transition-colors font-semibold"
+              >
+                Move Note
+              </button>
+              <button
+                onClick={() => setShowMoveModal(false)}
+                className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl hover:bg-gray-400 transition-colors font-semibold"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Enhanced Publish Modal */}
       <EnhancedPublishModal

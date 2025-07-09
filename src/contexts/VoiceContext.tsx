@@ -40,25 +40,36 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       recognitionRef.current.interimResults = true;
       recognitionRef.current.lang = 'en-US';
 
-      recognitionRef.current.onresult = (event) => {
-        if (!isRecordingRef.current) return;
-        
-        let interimTranscript = '';
-        let finalTranscript = '';
-        
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcriptText = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            finalTranscript += transcriptText + ' ';
-          } else {
-            interimTranscript += transcriptText;
+     recognitionRef.current.onresult = (event) => {
+  if (!isRecordingRef.current) return;
+
+  let combinedTranscript = '';
+
+  for (let i = event.resultIndex; i < event.results.length; i++) {
+    const transcriptSegment = event.results[i][0].transcript;
+    if (event.results[i].isFinal) {
+      combinedTranscript = transcriptSegment;
+    }
+  }
+
+  // Prevent duplicates by overwriting instead of appending
+  if (combinedTranscript.trim() !== '') {
+    setTranscript(combinedTranscript.trim());
+  }
+};
+      recognitionRef.current.onend = () => {
+        if (isRecordingRef.current) {
+          // Automatically restart recognition if still recording
+          try {
+            recognitionRef.current?.start();
+          } catch (error) {
+            console.error('Error restarting recognition:', error);
+            setIsRecording(false);
+            isRecordingRef.current = false;
           }
-        }
-        
-        if (finalTranscript) {
-          finalTranscriptRef.current += finalTranscript;
-          setTranscript(finalTranscriptRef.current.trim());
-        }
+        } 
+
+
       };
 
       recognitionRef.current.onstart = () => {

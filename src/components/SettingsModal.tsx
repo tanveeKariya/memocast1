@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  X, 
-  Settings, 
-  Bell, 
-  Save, 
-  Globe, 
-  HelpCircle, 
-  Shield, 
-  User,
+import {
+  X,
+  Settings,
+  Bell,
+  Save,
+  Globe,
+  HelpCircle,
+  Shield,
   Edit3,
   Trash2,
   Plus,
@@ -20,6 +19,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { personalitiesAPI, authAPI } from '../services/api';
 import { DraftsModal } from './DraftsModal';
+import { CreatePersonalityModal } from './CreatePersonalityModal'; // Assuming this component exists
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -62,11 +62,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
       const savedNotifications = localStorage.getItem('notifications') !== 'false';
       const savedAutoSave = localStorage.getItem('autoSave') !== 'false';
       const savedLanguage = localStorage.getItem('language') || 'English';
-      
+
       setNotifications(savedNotifications);
       setAutoSave(savedAutoSave);
       setLanguage(savedLanguage);
-      
+
       // Update profile data when user changes
       setProfileData({
         username: user?.username || '',
@@ -88,7 +88,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
     const newNotifications = !notifications;
     setNotifications(newNotifications);
     localStorage.setItem('notifications', newNotifications.toString());
-    
+
     try {
       await authAPI.updatePreferences({
         ...user?.preferences,
@@ -103,7 +103,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
     const newAutoSave = !autoSave;
     setAutoSave(newAutoSave);
     localStorage.setItem('autoSave', newAutoSave.toString());
-    
+
     try {
       await authAPI.updatePreferences({
         ...user?.preferences,
@@ -117,7 +117,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
   const handleLanguageChange = async (newLanguage: string) => {
     setLanguage(newLanguage);
     localStorage.setItem('language', newLanguage);
-    
+
     try {
       await authAPI.updatePreferences({
         ...user?.preferences,
@@ -125,30 +125,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
       });
     } catch (error) {
       console.error('Error updating language preference:', error);
-    }
-  };
-
-  const handleCreatePersonality = async () => {
-    try {
-      await personalitiesAPI.createPersonality(personalityForm);
-      setPersonalityForm({ name: '', icon: '👤', description: '', color: '#8B5CF6' });
-      setShowPersonalityForm(false);
-      loadPersonalities();
-      onSettingsUpdated();
-    } catch (error) {
-      console.error('Error creating personality:', error);
-    }
-  };
-
-  const handleUpdatePersonality = async () => {
-    try {
-      await personalitiesAPI.updatePersonality(editingPersonality._id, personalityForm);
-      setPersonalityForm({ name: '', icon: '👤', description: '', color: '#8B5CF6' });
-      setEditingPersonality(null);
-      loadPersonalities();
-      onSettingsUpdated();
-    } catch (error) {
-      console.error('Error updating personality:', error);
     }
   };
 
@@ -197,7 +173,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
       alert('New passwords do not match');
       return;
     }
-    
+
     try {
       await authAPI.changePassword({
         currentPassword: passwordData.currentPassword,
@@ -234,7 +210,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
   if (!isOpen) return null;
 
   const renderGeneralSettings = () => (
-    <motion.div 
+    <motion.div
       className="space-y-6"
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
@@ -246,13 +222,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
           <Settings className="w-5 h-5 mr-2" />
           Preferences
         </h3>
-        
+
         {/* Settings toggles */}
         {[
           { icon: Bell, label: 'Notifications', state: notifications, setState: handleNotificationsToggle },
           { icon: Save, label: 'Auto-save', state: autoSave, setState: handleAutoSaveToggle }
         ].map((setting, index) => (
-          <motion.div 
+          <motion.div
             key={setting.label}
             className="flex items-center justify-between py-3 border-b border-gray-100"
             initial={{ opacity: 0, x: -20 }}
@@ -271,7 +247,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
               }`}
               whileTap={{ scale: 0.95 }}
             >
-              <motion.div 
+              <motion.div
                 className="w-5 h-5 bg-white rounded-full"
                 animate={{ x: setting.state ? 24 : 4 }}
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
@@ -281,7 +257,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
         ))}
 
         {/* Language */}
-        <motion.div 
+        <motion.div
           className="flex items-center justify-between py-3"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -307,12 +283,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
       {/* Support */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Support</h3>
-        
+
         {[
           { icon: HelpCircle, label: 'Help & Support', action: openHelpAndSupport },
           { icon: Shield, label: 'Privacy Policy', action: openPrivacyPolicy }
         ].map((item, index) => (
-          <motion.button 
+          <motion.button
             key={item.label}
             onClick={item.action}
             className="flex items-center justify-between w-full py-3 text-left hover:bg-gray-50 rounded-lg px-3"
@@ -334,7 +310,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
   );
 
   const renderPersonalities = () => (
-    <motion.div 
+    <motion.div
       className="space-y-4"
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
@@ -343,7 +319,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900">Your Identities</h3>
         <motion.button
-          onClick={() => setShowPersonalityForm(true)}
+          onClick={() => {
+            setShowPersonalityForm(true);
+            setEditingPersonality(null);
+            setPersonalityForm({ name: '', icon: '👤', description: '', color: '#8B5CF6' });
+          }}
           className="p-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -354,8 +334,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
 
       <div className="max-h-64 overflow-y-auto space-y-3">
         {personalities.map((personality, index) => (
-          <motion.div 
-            key={personality._id} 
+          <motion.div
+            key={personality._id}
             className="bg-gray-50 rounded-xl p-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -383,6 +363,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
                       description: personality.description,
                       color: personality.color
                     });
+                    setShowPersonalityForm(true);
                   }}
                   className="p-2 text-gray-600 hover:text-purple-600 transition-colors"
                   whileHover={{ scale: 1.1 }}
@@ -390,9 +371,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
                 >
                   <Edit3 className="w-4 h-4" />
                 </motion.button>
-                <motion.button 
+                <motion.button
                   onClick={() => handleDeletePersonality(personality._id)}
-                  className="p-2 text-gray-600 hover:text-red-600 transition-colors"
+                  className="p-2 text-red-600 hover:text-red-800 transition-colors"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
@@ -403,80 +384,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
           </motion.div>
         ))}
       </div>
-
-      {/* Add/Edit Personality Form */}
-      <AnimatePresence>
-        {(showPersonalityForm || editingPersonality) && (
-          <motion.div 
-            className="bg-white border border-gray-200 rounded-xl p-4"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <h4 className="font-semibold text-gray-900 mb-4">
-              {editingPersonality ? 'Edit Identity' : 'Add New Identity'}
-            </h4>
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Identity name"
-                value={personalityForm.name}
-                onChange={(e) => setPersonalityForm({...personalityForm, name: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white text-gray-900"
-              />
-              <input
-                type="text"
-                placeholder="Icon (emoji)"
-                value={personalityForm.icon}
-                onChange={(e) => setPersonalityForm({...personalityForm, icon: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white text-gray-900"
-              />
-              <textarea
-                placeholder="Description"
-                rows={3}
-                value={personalityForm.description}
-                onChange={(e) => setPersonalityForm({...personalityForm, description: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none bg-white text-gray-900"
-              />
-              <div className="flex space-x-3">
-                <motion.button 
-                  onClick={editingPersonality ? handleUpdatePersonality : handleCreatePersonality}
-                  className="flex-1 bg-purple-600 text-white py-3 rounded-xl hover:bg-purple-700 transition-colors"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {editingPersonality ? 'Update' : 'Create'}
-                </motion.button>
-                <motion.button
-                  onClick={() => {
-                    setShowPersonalityForm(false);
-                    setEditingPersonality(null);
-                    setPersonalityForm({ name: '', icon: '👤', description: '', color: '#8B5CF6' });
-                  }}
-                  className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl hover:bg-gray-400 transition-colors"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Cancel
-                </motion.button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 
   const renderAccount = () => (
-    <motion.div 
+    <motion.div
       className="space-y-6"
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
     >
       {/* Profile Section */}
-      <motion.div 
+      <motion.div
         className="text-center"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -506,7 +425,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
           { icon: Shield, label: 'Privacy Settings', action: openPrivacyPolicy },
           { icon: Download, label: 'Export Data', action: handleExportData }
         ].map((item, index) => (
-          <motion.button 
+          <motion.button
             key={item.label}
             onClick={item.action}
             className="flex items-center justify-between w-full py-3 text-left hover:bg-gray-50 rounded-lg px-3"
@@ -528,7 +447,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
       {/* Edit Profile Form */}
       <AnimatePresence>
         {showEditProfile && (
-          <motion.div 
+          <motion.div
             className="bg-gray-50 rounded-xl p-4"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
@@ -552,7 +471,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white text-gray-900"
               />
               <div className="flex space-x-3">
-                <motion.button 
+                <motion.button
                   onClick={handleUpdateProfile}
                   className="flex-1 bg-purple-600 text-white py-3 rounded-xl hover:bg-purple-700 transition-colors"
                   whileHover={{ scale: 1.02 }}
@@ -577,7 +496,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
       {/* Change Password Form */}
       <AnimatePresence>
         {showChangePassword && (
-          <motion.div 
+          <motion.div
             className="bg-gray-50 rounded-xl p-4"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
@@ -608,7 +527,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white text-gray-900"
               />
               <div className="flex space-x-3">
-                <motion.button 
+                <motion.button
                   onClick={handleChangePassword}
                   className="flex-1 bg-purple-600 text-white py-3 rounded-xl hover:bg-purple-700 transition-colors"
                   whileHover={{ scale: 1.02 }}
@@ -631,14 +550,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
       </AnimatePresence>
 
       {/* Danger Zone */}
-      <motion.div 
+      <motion.div
         className="border-t border-gray-200 pt-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
         <h4 className="text-lg font-semibold text-gray-900 mb-4">Danger Zone</h4>
-        
+
         <motion.button
           onClick={logout}
           className="flex items-center justify-between w-full py-3 text-left hover:bg-red-50 rounded-lg px-3 text-red-600 mb-2"
@@ -651,8 +570,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
           </div>
           <ChevronRight className="w-5 h-5" />
         </motion.button>
-        
-        <motion.button 
+
+        <motion.button
           onClick={handleDeleteAccount}
           className="flex items-center justify-between w-full py-3 text-left hover:bg-red-50 rounded-lg px-3 text-red-600"
           whileHover={{ scale: 1.01 }}
@@ -670,13 +589,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
 
   return (
     <AnimatePresence>
-      <motion.div 
+      <motion.div
         className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
-        <motion.div 
+        <motion.div
           className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -736,6 +655,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
           </div>
         </motion.div>
       </motion.div>
+
+      {/* Personality Modal */}
+      <AnimatePresence>
+        {showPersonalityForm && (
+          <CreatePersonalityModal
+            isOpen={showPersonalityForm}
+            onClose={() => {
+              setShowPersonalityForm(false);
+              setEditingPersonality(null);
+            }}
+            onPersonalityCreated={() => {
+              setShowPersonalityForm(false);
+              setEditingPersonality(null);
+              loadPersonalities();
+              onSettingsUpdated();
+            }}
+            editingPersonality={editingPersonality}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Drafts Modal */}
       <DraftsModal

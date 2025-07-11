@@ -202,27 +202,30 @@ export const DraftsModal: React.FC<DraftsModalProps> = ({ isOpen, onClose }) => 
                           <button className="p-2 text-gray-600 hover:text-green-600 transition-colors">
                             <Share2 className="w-4 h-4" />
                           </button>
-                          <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block bg-white border border-gray-200 rounded-lg shadow-lg p-2 min-w-[120px]">
+                          <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block bg-white border border-gray-200 rounded-lg shadow-lg p-2 min-w-[120px] z-50">
                             <button
                               onClick={() => handleShareDraft(draft, 'linkedin')}
                               disabled={isPublishing}
-                              className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm"
+                              className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm flex items-center space-x-2"
                             >
-                              LinkedIn
+                              <span>💼</span>
+                              <span>LinkedIn</span>
                             </button>
                             <button
                               onClick={() => handleShareDraft(draft, 'twitter')}
                               disabled={isPublishing}
-                              className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm"
+                              className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm flex items-center space-x-2"
                             >
-                              Twitter
+                              <span>🐦</span>
+                              <span>Twitter</span>
                             </button>
                             <button
                               onClick={() => handleShareDraft(draft, 'instagram')}
                               disabled={isPublishing}
-                              className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm"
+                              className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm flex items-center space-x-2"
                             >
-                              Instagram
+                              <span>📸</span>
+                              <span>Instagram</span>
                             </button>
                           </div>
                         </div>

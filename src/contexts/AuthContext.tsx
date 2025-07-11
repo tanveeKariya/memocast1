@@ -13,6 +13,11 @@ interface User {
     icon: string;
     color: string;
   };
+  preferences: {
+    notifications: boolean;
+    autoSave: boolean;
+    language: string;
+  };
 }
 
 interface AuthContextType {

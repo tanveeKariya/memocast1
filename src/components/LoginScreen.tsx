@@ -78,46 +78,6 @@ export const LoginScreen: React.FC = () => {
     const cleanup = loadGoogleScript();
     return cleanup;
   }, []);
-
-  // useEffect to render the Google button when script is ready and ref is available
-  useEffect(() => {
-    if (isGoogleScriptReady && googleButtonRef.current) {
-      try {
-        // Clear the div content before rendering to avoid duplicates or re-render issues
-        googleButtonRef.current.innerHTML = '';
-        window.google.accounts.id.renderButton(
-          googleButtonRef.current,
-          {
-            theme: 'outline',
-            size: 'large',
-            width: '100%',
-            text: isLogin ? 'signin_with' : 'signup_with',
-          }
-        );
-        console.log("✅ Google Sign-In button rendered successfully.");
-      } catch (error) {
-        console.error("❌ Error rendering Google button:", error);
-        setError('Failed to render Google Sign-In button.');
-      }
-    }
-  }, [isGoogleScriptReady, googleButtonRef.current, isLogin]);
-
-  // useEffect to update Google GSI context when isLogin changes
-  useEffect(() => {
-    if (isGoogleScriptReady && window.google && window.google.accounts) {
-      window.google.accounts.id.initialize({
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        callback: handleGoogleResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-        use_fedcm_for_prompt: true,
-        ux_mode: 'popup',
-        context: isLogin ? 'signin' : 'signup'
-      });
-      console.log(`Google GSI context updated to: ${isLogin ? 'signin' : 'signup'}`);
-    }
-  }, [isLogin, isGoogleScriptReady]);
-
   const handleGoogleResponse = async (response: any) => {
     setLoading(true);
     setError('');
@@ -136,6 +96,43 @@ export const LoginScreen: React.FC = () => {
     }
   };
 
+
+  // useEffect to render the Google button when script is ready and ref is available
+  useEffect(() => {
+    if (isGoogleScriptReady && googleButtonRef.current && window.google) {
+      try {
+        // Clear the div content before rendering to avoid duplicates or re-render issues
+        googleButtonRef.current.innerHTML = '';
+        
+        // Re-initialize with current context
+        window.google.accounts.id.initialize({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+          callback: handleGoogleResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+          use_fedcm_for_prompt: true,
+          ux_mode: 'popup',
+          context: isLogin ? 'signin' : 'signup'
+        });
+        
+        window.google.accounts.id.renderButton(
+          googleButtonRef.current,
+          {
+            theme: 'outline',
+            size: 'large',
+            width: '100%',
+            text: isLogin ? 'signin_with' : 'signup_with',
+          }
+        );
+        console.log("✅ Google Sign-In button rendered successfully.");
+      } catch (error) {
+        console.error("❌ Error rendering Google button:", error);
+        setError('Failed to render Google Sign-In button.');
+      }
+    }
+  }, [isGoogleScriptReady, isLogin, handleGoogleResponse]);
+
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);

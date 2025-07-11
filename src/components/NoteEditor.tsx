@@ -6,6 +6,7 @@ import {
   Mic, 
   MicOff, 
   Volume2,
+  VolumeX,
   Edit3,
   Trash2,
   Share2,
@@ -17,12 +18,15 @@ import {
   FolderOpen,
   ChevronDown,
   X,
-  Upload
+  Upload,
+  AlertCircle
 } from 'lucide-react';
 import { notesAPI, foldersAPI } from '../services/api';
 import { useVoice } from '../contexts/VoiceContext';
 import { EnhancedPublishModal } from './EnhancedPublishModal';
 import { AddNoteModal } from './AddNoteModal';
+import { extractTextFromFile } from './fileTextExtractor';
+import Tesseract from 'tesseract.js';
 import jsPDF from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
@@ -63,19 +67,22 @@ interface Folder {
 export const NoteEditor: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { isRecording, transcript, startRecording, stopRecording, speakText, clearTranscript } = useVoice();
+  const { isRecording, transcript, startRecording, stopRecording, speakText, stopSpeaking, clearTranscript } = useVoice();
   
   const [note, setNote] = useState<Note | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
+  const [processingFiles, setProcessingFiles] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
+  const [showFileOptions, setShowFileOptions] = useState<File | null>(null);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [selectedFolder, setSelectedFolder] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -167,7 +174,7 @@ export const NoteEditor: React.FC = () => {
     setEnhancing(true);
     try {
       const response = await notesAPI.enhanceNote(note._id, {
-        platform: 'general',
+        platform: 'linkedin',
         personalityId: note.personalityId._id,
         enhanceType: 'format'
       });
@@ -192,12 +199,61 @@ export const NoteEditor: React.FC = () => {
   };
 
   const handlePlayback = () => {
-    speakText(content);
+    if (isSpeaking) {
+      stopSpeaking();
+      setIsSpeaking(false);
+    } else {
+      speakText(content);
+      setIsSpeaking(true);
+      // Reset speaking state after speech ends
+      setTimeout(() => setIsSpeaking(false), content.length * 50);
+    }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    setUploadedFiles(prev => [...prev, ...files]);
+    
+    files.forEach(file => {
+      if (file.type.startsWith('image/') || 
+          file.type === 'application/pdf' || 
+          file.type.includes('word') || 
+          file.name.endsWith('.docx') ||
+          file.type.startsWith('text/')) {
+        setShowFileOptions(file);
+      } else {
+        setUploadedFiles(prev => [...prev, file]);
+      }
+    });
+  };
+
+  const extractTextFromFileLocal = async (file: File): Promise<string> => {
+    setProcessingFiles(true);
+    try {
+      if (file.type.startsWith('image/')) {
+        const result = await Tesseract.recognize(file, 'eng');
+        return result?.data?.text?.trim() || '';
+      } else {
+        return await extractTextFromFile(file);
+      }
+    } catch (error) {
+      console.error('Error extracting text:', error);
+      return '';
+    } finally {
+      setProcessingFiles(false);
+    }
+  };
+
+  const handleExtractText = async (file: File) => {
+    const extractedText = await extractTextFromFileLocal(file);
+    if (extractedText) {
+      setContent(prev => prev + (prev ? '\n\n' : '') + extractedText);
+    }
+    setShowFileOptions(null);
+  };
+
+  const saveFileAsAttachment = (file: File) => {
+    setUploadedFiles(prev => [...prev, file]);
+    setShowFileOptions(null);
   };
 
   const downloadAsPDF = () => {
@@ -526,9 +582,13 @@ export const NoteEditor: React.FC = () => {
               <div className="flex space-x-2">
                 <button
                   onClick={handlePlayback}
-                  className="p-2 rounded-full bg-purple-100 hover:bg-purple-200 transition-colors"
+                  className={`p-2 rounded-full transition-colors ${
+                    isSpeaking 
+                      ? 'bg-red-100 hover:bg-red-200 text-red-600' 
+                      : 'bg-purple-100 hover:bg-purple-200 text-purple-600'
+                  }`}
                 >
-                  <Volume2 className="w-5 h-5 text-purple-600" />
+                  {isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                 </button>
                 {isEditing && (
                   <>
@@ -601,6 +661,42 @@ export const NoteEditor: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* File Options Modal */}
+      {showFileOptions && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <div className="flex items-center mb-4">
+              <AlertCircle className="w-6 h-6 text-orange-500 mr-2" />
+              <h3 className="text-lg font-semibold text-gray-900">File Upload Options</h3>
+            </div>
+            <p className="text-gray-600 mb-6">
+              What would you like to do with this file?
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => handleExtractText(showFileOptions)}
+                className="w-full bg-purple-600 text-white py-3 rounded-xl hover:bg-purple-700 transition-colors"
+                disabled={processingFiles}
+              >
+                {processingFiles ? 'Extracting Text...' : 'Extract Text from File'}
+              </button>
+              <button
+                onClick={() => saveFileAsAttachment(showFileOptions)}
+                className="w-full bg-gray-300 text-gray-700 py-3 rounded-xl hover:bg-gray-400 transition-colors"
+              >
+                Save as Attachment
+              </button>
+              <button
+                onClick={() => setShowFileOptions(null)}
+                className="w-full text-gray-600 py-2 hover:text-gray-800 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Move Note Modal */}
       {showMoveModal && (

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  Plus, 
-  FileText, 
-  GraduationCap, 
-  Briefcase, 
-  FolderOpen, 
+import {
+  Plus,
+  FileText,
+  GraduationCap,
+  Briefcase,
+  FolderOpen,
   Home,
   Upload,
   MoreHorizontal,
@@ -16,13 +16,35 @@ import {
   Trash2,
   Eye,
   Share2,
-  FolderPlus
+  FolderPlus,
+  X // <--- Added missing import for X icon
 } from 'lucide-react';
 import { notesAPI, foldersAPI, personalitiesAPI, authAPI } from '../services/api';
 import { CreateFolderModal } from './CreateFolderModal';
 import { AddNoteModal } from './AddNoteModal';
 import { SettingsModal } from './SettingsModal';
 import { CreatePersonalityModal } from './CreatePersonalityModal';
+
+// Assuming User interface is defined elsewhere, but including it here for completeness
+// based on previous interaction's correction for 'preferences'.
+interface User {
+  _id: string;
+  username: string;
+  email: string;
+  avatar: string;
+  authProvider?: string;
+  currentPersonality: {
+    _id: string;
+    name: string;
+    icon: string;
+    color: string;
+  };
+  preferences?: {
+    notifications?: boolean;
+    autoSave?: boolean;
+    language?: string;
+  };
+}
 
 interface Note {
   _id: string;
@@ -108,7 +130,7 @@ export const HomeScreen: React.FC = () => {
         foldersAPI.getFolders(),
         personalitiesAPI.getPersonalities()
       ]);
-      
+
       setNotes(notesRes.data);
       setFolders(foldersRes.data);
       setPersonalities(personalitiesRes.data);
@@ -210,9 +232,9 @@ export const HomeScreen: React.FC = () => {
     try {
       // Copy content to clipboard and redirect
       await copyToClipboard(`📁 ${folder.name} - Shared from Memocast.co`);
-      
+
       let response;
-      
+
       if (platform === 'linkedin') {
         response = await authAPI.linkedinPost({ content: `📁 ${folder.name} - Shared from Memocast.co` });
       } else if (platform === 'twitter') {
@@ -220,11 +242,11 @@ export const HomeScreen: React.FC = () => {
       } else if (platform === 'instagram') {
         response = await authAPI.instagramPost({ content: `📁 ${folder.name} - Shared from Memocast.co` });
       }
-      
+
       if (response?.data.redirectUrl) {
         window.open(response.data.redirectUrl, '_blank');
       }
-      
+
       setShowFolderMenu(null);
     } catch (error) {
       console.error('Error sharing folder:', error);
@@ -274,7 +296,7 @@ export const HomeScreen: React.FC = () => {
               <p className="text-sm text-gray-600">Welcome {user?.username}</p>
             </div>
           </button>
-          
+
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setShowSearch(!showSearch)}
@@ -303,7 +325,7 @@ export const HomeScreen: React.FC = () => {
                 {storageStats.used.toFixed(2)} GB of {storageStats.total} GB Used
               </p>
               <div className="w-48 h-2 bg-white/20 rounded-full mt-2">
-                <div 
+                <div
                   className="h-full bg-white rounded-full transition-all duration-300"
                   style={{ width: `${Math.min(storageStats.percentage, 100)}%` }}
                 />
@@ -315,14 +337,27 @@ export const HomeScreen: React.FC = () => {
         {/* Search Bar */}
         {showSearch && (
           <div className="mb-6">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search notes and projects..."
-              className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm rounded-xl border border-white/20 focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
-              autoFocus
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search notes and projects..."
+                className="w-full px-4 py-3 pr-12 bg-white/80 backdrop-blur-sm rounded-xl border border-white/20 focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
+                autoFocus
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setShowSearch(false);
+                  }}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -369,7 +404,7 @@ export const HomeScreen: React.FC = () => {
                   )}
                 </button>
               ))}
-              <button 
+              <button
                 onClick={() => setShowCreatePersonality(true)}
                 className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-all flex-shrink-0"
               >
@@ -385,8 +420,8 @@ export const HomeScreen: React.FC = () => {
             <button
               onClick={() => setView('folders')}
               className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                view === 'folders' 
-                  ? 'bg-purple-600 text-white shadow-md' 
+                view === 'folders'
+                  ? 'bg-purple-600 text-white shadow-md'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
@@ -395,8 +430,8 @@ export const HomeScreen: React.FC = () => {
             <button
               onClick={() => setView('notes')}
               className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                view === 'notes' 
-                  ? 'bg-purple-600 text-white shadow-md' 
+                view === 'notes'
+                  ? 'bg-purple-600 text-white shadow-md'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
@@ -444,7 +479,7 @@ export const HomeScreen: React.FC = () => {
               </div>
             ) : (
               /* Folders Grid */
-              <div className="space-y-4">
+              <div className="space-y-4 pb-32">
                 {filteredFolders.map((folder, index) => (
                   <div
                     key={folder._id}
@@ -472,9 +507,9 @@ export const HomeScreen: React.FC = () => {
                         >
                           <MoreHorizontal className="w-5 h-5 text-gray-400" />
                         </button>
-                        
+
                         {showFolderMenu === folder._id && (
-                          <div className="absolute right-0 top-12 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-10">
+                          <div className="absolute right-0 top-12 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 min-w-[150px]">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -502,14 +537,15 @@ export const HomeScreen: React.FC = () => {
                                 <Share2 className="w-4 h-4 text-gray-500" />
                                 <span>Share</span>
                               </button>
-                              <div className="absolute left-full top-0 ml-2 hidden group-hover:block bg-white border border-gray-200 rounded-lg shadow-lg p-2 min-w-[120px]">
+                              <div className="absolute left-full top-0 ml-2 hidden group-hover:block bg-white border border-gray-200 rounded-lg shadow-lg p-2 min-w-[120px] z-50">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleShareFolder(folder, 'linkedin');
                                   }}
-                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm"
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm flex items-center space-x-2"
                                 >
+                                  <span>💼</span>
                                   LinkedIn
                                 </button>
                                 <button
@@ -517,8 +553,9 @@ export const HomeScreen: React.FC = () => {
                                     e.stopPropagation();
                                     handleShareFolder(folder, 'twitter');
                                   }}
-                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm"
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm flex items-center space-x-2"
                                 >
+                                  <span>🐦</span>
                                   Twitter
                                 </button>
                                 <button
@@ -526,8 +563,9 @@ export const HomeScreen: React.FC = () => {
                                     e.stopPropagation();
                                     handleShareFolder(folder, 'instagram');
                                   }}
-                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm"
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm flex items-center space-x-2"
                                 >
+                                  <span>📸</span>
                                   Instagram
                                 </button>
                               </div>
@@ -641,7 +679,7 @@ export const HomeScreen: React.FC = () => {
             <span className="text-xs text-purple-600 font-medium">Home</span>
             <div className="w-6 h-1 bg-purple-600 rounded-full"></div>
           </button>
-          <button 
+          <button
             onClick={() => navigate('/publish')}
             className="flex flex-col items-center space-y-1"
           >

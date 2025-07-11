@@ -11,6 +11,13 @@ interface AddNoteModalProps {
   isOpen: boolean;
   onClose: () => void;
   onNoteCreated: () => void;
+  prefilledData?: {
+    title?: string;
+    content?: string;
+    personalityId?: string;
+    folderId?: string;
+    attachments?: File[];
+  };
 }
 
 interface Folder {
@@ -29,7 +36,8 @@ interface Personality {
 export const AddNoteModal: React.FC<AddNoteModalProps> = ({ 
   isOpen, 
   onClose, 
-  onNoteCreated 
+  onNoteCreated,
+  prefilledData 
 }) => {
   const { user } = useAuth();
   const { isRecording, transcript, startRecording, stopRecording, clearTranscript } = useVoice();
@@ -51,8 +59,23 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
       loadData();
       setSelectedPersonality(user?.currentPersonality?._id || '');
       clearTranscript();
+      
+      // Set prefilled data if provided
+      if (prefilledData) {
+        setTitle(prefilledData.title || 'Untitled Note 1');
+        setContent(prefilledData.content || '');
+        setSelectedPersonality(prefilledData.personalityId || user?.currentPersonality?._id || '');
+        setSelectedFolder(prefilledData.folderId || '');
+        setUploadedFiles(prefilledData.attachments || []);
+      } else {
+        // Reset form for new note
+        setTitle('Untitled Note 1');
+        setContent('');
+        setSelectedFolder('');
+        setUploadedFiles([]);
+      }
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, prefilledData]);
 
   useEffect(() => {
     if (transcript) {
@@ -75,75 +98,45 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-  const files = Array.from(event.target.files || []);
-  for (const file of files) {
+    const files = Array.from(event.target.files || []);
+    for (const file of files) {
+      try {
+        const extractedText = await extractTextFromFile(file);
+        setContent((prev) => prev + (prev ? '\n\n' : '') + extractedText);
+      } catch (error) {
+        console.error('Error extracting text:', error);
+        alert(`Could not extract text from ${file.name}`);
+      }
+    }
+  };
+
+  const extractTextFromFile = async (file: File): Promise<string> => {
     try {
-      const extractedText = await extractTextFromFile(file);
-      setContent((prev) => prev + (prev ? '\n\n' : '') + extractedText);
+      if (file.type.startsWith('image/')) {
+        // OCR using Tesseract for images
+        const result = await Tesseract.recognize(file, 'eng');
+        const extracted = result?.data?.text?.trim();
+        return extracted || '';
+      } else {
+        // Other documents: send to server for extraction
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('http://localhost:5000/api/extract-text', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+        const extracted = data?.text?.trim();
+
+        return data.success && extracted ? extracted : '';
+      }
     } catch (error) {
-      console.error('Error extracting text:', error);
-      alert(`Could not extract text from ${file.name}`);
+      console.error('❌ Error extracting text from file:', error);
+      return '';
     }
-  }
-};
-
-
-  // const processTextFile = async (file: File) => {
-  //   const reader = new FileReader();
-  //   reader.onload = (e) => {
-  //     const text = e.target?.result as string;
-  //     setContent(prev => prev + (prev ? '\n\n' : '') + text);
-  //   };
-  //   reader.readAsText(file);
-  // };
-
-  // const extractTextFromFile = async (file: File) => {
-  //   setProcessingFiles(true);
-  //   try {
-  //     if (file.type.startsWith('image/')) {
-  //       const result = await Tesseract.recognize(file, 'eng');
-  //       setContent(prev => prev + (prev ? '\n\n' : '') + result.data.text);
-  //     } else if (file.type.includes('text') || file.name.endsWith('.txt')) {
-  //       await processTextFile(file);
-  //     } else {
-  //       // For other document types, add to attachments for server-side processing
-  //       setUploadedFiles(prev => [...prev, file]);
-  //     }
-  //     setShowFileOptions(null);
-  //   } catch (error) {
-  //     console.error('Error extracting text:', error);
-  //   } finally {
-  //     setProcessingFiles(false);
-  //   }
-  // };
-const extractTextFromFile = async (file: File): Promise<string> => {
-  try {
-    if (file.type.startsWith('image/')) {
-      // OCR using Tesseract for images
-      const result = await Tesseract.recognize(file, 'eng');
-      const extracted = result?.data?.text?.trim();
-      return extracted || '';
-    } else {
-      // Other documents: send to server for extraction
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('http://localhost:5000/api/extract-text', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-      const extracted = data?.text?.trim();
-
-      return data.success && extracted ? extracted : '';
-    }
-  } catch (error) {
-    console.error('❌ Error extracting text from file:', error);
-    return '';
-  }
-};
-
+  };
 
   const saveFileAsAttachment = (file: File) => {
     setUploadedFiles(prev => [...prev, file]);
@@ -227,7 +220,9 @@ const extractTextFromFile = async (file: File): Promise<string> => {
           transition={{ type: "spring", damping: 20 }}
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Add New Note</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {prefilledData ? 'Save as New Note' : 'Add New Note'}
+            </h2>
             <motion.button
               onClick={onClose}
               className="p-2 rounded-full hover:bg-gray-100 transition-colors"

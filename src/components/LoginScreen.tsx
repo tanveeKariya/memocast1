@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'; // Import useRef
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Mic, Eye, EyeOff, Loader } from 'lucide-react';
@@ -12,8 +12,7 @@ declare global {
 }
 
 export const LoginScreen: React.FC = () => {
-  // Ensure linkedinLogin is included if you plan to use it (your latest code had it)
-  const { login, register, demoLogin, googleLogin, linkedinLogin } = useAuth();
+  const { login, register, demoLogin, googleLogin } = useAuth();
   const navigate = useNavigate();
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [isLogin, setIsLogin] = useState(true);
@@ -50,15 +49,11 @@ export const LoginScreen: React.FC = () => {
               callback: handleGoogleResponse,
               auto_select: false,
               cancel_on_tap_outside: true,
-              use_fedcm_for_prompt: true, // It's generally good to keep FedCM true for modern browsers
-              ux_mode: 'popup', // Keep 'popup' if you want button to open a popup for credentials
-              context: 'signin' // Initial context. Will be updated by another useEffect.
+              use_fedcm_for_prompt: true,
+              ux_mode: 'popup',
+              context: 'signin'
             });
-            setIsGoogleScriptReady(true); // Mark script as ready
-
-            // Optional: If you want to show One Tap on page load (instead of just a button)
-            // window.google.accounts.id.prompt();
-
+            setIsGoogleScriptReady(true);
           } catch (error) {
             console.error('Google initialization error:', error);
             setError('Failed to initialize Google authentication.');
@@ -82,7 +77,7 @@ export const LoginScreen: React.FC = () => {
 
     const cleanup = loadGoogleScript();
     return cleanup;
-  }, []); // Empty dependency array: runs once on mount
+  }, []);
 
   // useEffect to render the Google button when script is ready and ref is available
   useEffect(() => {
@@ -96,7 +91,7 @@ export const LoginScreen: React.FC = () => {
             theme: 'outline',
             size: 'large',
             width: '100%',
-            text: isLogin ? 'signin_with' : 'signup_with', // Dynamic text based on tab
+            text: isLogin ? 'signin_with' : 'signup_with',
           }
         );
         console.log("✅ Google Sign-In button rendered successfully.");
@@ -105,7 +100,7 @@ export const LoginScreen: React.FC = () => {
         setError('Failed to render Google Sign-In button.');
       }
     }
-  }, [isGoogleScriptReady, googleButtonRef.current, isLogin]); // Re-render when script is ready, ref changes, or tab changes
+  }, [isGoogleScriptReady, googleButtonRef.current, isLogin]);
 
   // useEffect to update Google GSI context when isLogin changes
   useEffect(() => {
@@ -117,12 +112,11 @@ export const LoginScreen: React.FC = () => {
         cancel_on_tap_outside: true,
         use_fedcm_for_prompt: true,
         ux_mode: 'popup',
-        context: isLogin ? 'signin' : 'signup' // Update context based on current tab
+        context: isLogin ? 'signin' : 'signup'
       });
       console.log(`Google GSI context updated to: ${isLogin ? 'signin' : 'signup'}`);
     }
   }, [isLogin, isGoogleScriptReady]);
-
 
   const handleGoogleResponse = async (response: any) => {
     setLoading(true);
@@ -137,35 +131,6 @@ export const LoginScreen: React.FC = () => {
     } catch (err: any) {
       console.error('Google login error:', err);
       setError(err.message || 'Google authentication failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Keep handleLinkedInLogin and handleLinkedInCallback as they are if you intend to use LinkedIn
-  const handleLinkedInLogin = () => {
-    const clientId = import.meta.env.VITE_LINKEDIN_CLIENT_ID;
-    const redirectUri = encodeURIComponent(`${window.location.origin}`);
-    const scope = encodeURIComponent('openid profile email');
-    const state = 'linkedin_auth';
-
-    const linkedinAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&state=${state}`;
-
-    window.location.href = linkedinAuthUrl;
-  };
-
-  const handleLinkedInCallback = async (code: string) => {
-    setLoading(true);
-    setError('');
-
-    try {
-      await linkedinLogin(code);
-      window.history.replaceState({}, document.title, window.location.pathname);
-      navigate('/');
-    } catch (err: any) {
-      console.error('LinkedIn login error:', err);
-      setError(err.message || 'LinkedIn authentication failed');
-      window.history.replaceState({}, document.title, window.location.pathname);
     } finally {
       setLoading(false);
     }
@@ -255,21 +220,8 @@ export const LoginScreen: React.FC = () => {
 
           {/* Social Login Buttons */}
           <div className="space-y-3 mb-6">
-            {/* Google Login Button Container: This is where the GSI button will render */}
-            {/* It must be a simple div for GSI to render into, not a React <button> */}
+            {/* Google Login Button Container */}
             <div id="google-signin-button" ref={googleButtonRef}></div>
-
-            {/* LinkedIn Login Button */}
-            <button
-              onClick={handleLinkedInLogin}
-              disabled={loading}
-              className="w-full flex items-center justify-center space-x-3 py-3 px-4 bg-[#0077B5] text-white rounded-xl hover:bg-[#005885] transition-all font-medium disabled:opacity-50"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-              </svg>
-              <span>Continue with LinkedIn</span>
-            </button>
           </div>
 
           <div className="relative mb-6">

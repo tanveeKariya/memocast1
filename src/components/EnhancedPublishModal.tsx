@@ -478,7 +478,13 @@ Swipe to see more insights! 👉
               </div>
               
               <div className="bg-gray-50 rounded-xl p-4 max-h-32 overflow-y-auto">
-                <p className="text-gray-700 text-sm">{combinedContent}</p>
+                <textarea
+                  value={combinedContent}
+                  onChange={(e) => setCombinedContent(e.target.value)}
+                  rows={6}
+                  className="w-full bg-transparent border-none outline-none resize-none text-gray-700 text-sm"
+                  placeholder="Combined content will appear here..."
+                />
               </div>
 
               {/* Type Selection */}
@@ -614,23 +620,6 @@ Swipe to see more insights! 👉
               </div>
 
               <div className="flex space-x-3">
-                <button
-                  onClick={handleSaveAsDraft}
-                  disabled={isSavingDraft}
-                  className="flex-1 bg-yellow-600 text-white py-3 rounded-xl hover:bg-yellow-700 transition-colors font-semibold disabled:opacity-50 flex items-center justify-center"
-                >
-                  {isSavingDraft ? (
-                    <>
-                      <Loader className="w-5 h-5 animate-spin mr-2" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-5 h-5 mr-2" />
-                      Save as Draft
-                    </>
-                  )}
-                </button>
                 {!showPortfolioOptions && (
                   <button
                     onClick={handlePublish}
@@ -650,6 +639,23 @@ Swipe to see more insights! 👉
                     )}
                   </button>
                 )}
+                <button
+                  onClick={handleSaveAsDraft}
+                  disabled={isSavingDraft}
+                  className="flex-1 bg-yellow-600 text-white py-3 rounded-xl hover:bg-yellow-700 transition-colors font-semibold disabled:opacity-50 flex items-center justify-center"
+                >
+                  {isSavingDraft ? (
+                    <>
+                      <Loader className="w-5 h-5 animate-spin mr-2" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5 mr-2" />
+                      Save as Draft
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           )}

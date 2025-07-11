@@ -31,6 +31,7 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const finalTranscriptRef = useRef<string>('');
   const isRecordingRef = useRef<boolean>(false);
+  const lastWordRef = useRef<string>('');
 
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -40,36 +41,31 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       recognitionRef.current.interimResults = true;
       recognitionRef.current.lang = 'en-US';
 
-     recognitionRef.current.onresult = (event) => {
-  if (!isRecordingRef.current) return;
+      recognitionRef.current.onresult = (event) => {
+        if (!isRecordingRef.current) return;
 
-  let combinedTranscript = '';
+        let combinedTranscript = '';
 
-  for (let i = event.resultIndex; i < event.results.length; i++) {
-    const transcriptSegment = event.results[i][0].transcript;
-    if (event.results[i].isFinal) {
-      combinedTranscript = transcriptSegment;
-    }
-  }
-
-  // Prevent duplicates by overwriting instead of appending
-  if (combinedTranscript.trim() !== '') {
-    setTranscript(combinedTranscript.trim());
-  }
-};
-      recognitionRef.current.onend = () => {
-        if (isRecordingRef.current) {
-          // Automatically restart recognition if still recording
-          try {
-            recognitionRef.current?.start();
-          } catch (error) {
-            console.error('Error restarting recognition:', error);
-            setIsRecording(false);
-            isRecordingRef.current = false;
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcriptSegment = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            combinedTranscript = transcriptSegment;
           }
-        } 
+        }
 
-
+        // Check if the last word is similar to current one
+        if (combinedTranscript.trim() !== '') {
+          const words = combinedTranscript.trim().split(' ');
+          const currentLastWord = words[words.length - 1].toLowerCase();
+          
+          // If the last word is similar to the previous one, don't record
+          if (lastWordRef.current && currentLastWord === lastWordRef.current) {
+            return;
+          }
+          
+          lastWordRef.current = currentLastWord;
+          setTranscript(combinedTranscript.trim());
+        }
       };
 
       recognitionRef.current.onstart = () => {
@@ -115,6 +111,7 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       isRecordingRef.current = true;
       setError(null);
       finalTranscriptRef.current = '';
+      lastWordRef.current = '';
       setTranscript('');
       
       try {
@@ -132,6 +129,7 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (recognitionRef.current && isRecording) {
       setIsRecording(false);
       isRecordingRef.current = false;
+      lastWordRef.current = '';
       recognitionRef.current.stop();
     }
   }, [isRecording]);
@@ -152,6 +150,7 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const clearTranscript = useCallback(() => {
     setTranscript('');
     finalTranscriptRef.current = '';
+    lastWordRef.current = '';
   }, []);
 
   const value: VoiceContextType = {

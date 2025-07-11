@@ -16,11 +16,13 @@ import {
   Paperclip,
   FolderOpen,
   ChevronDown,
-  X
+  X,
+  Upload
 } from 'lucide-react';
 import { notesAPI, foldersAPI } from '../services/api';
 import { useVoice } from '../contexts/VoiceContext';
 import { EnhancedPublishModal } from './EnhancedPublishModal';
+import { AddNoteModal } from './AddNoteModal';
 import jsPDF from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
@@ -73,8 +75,10 @@ export const NoteEditor: React.FC = () => {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const [showMoveModal, setShowMoveModal] = useState(false);
+  const [showAddNoteModal, setShowAddNoteModal] = useState(false);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [selectedFolder, setSelectedFolder] = useState('');
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   // Dummy images for demonstration
   const dummyImages = [
@@ -138,6 +142,13 @@ export const NoteEditor: React.FC = () => {
     }
   };
 
+  const handleSaveAsNew = () => {
+    if (!note) return;
+    
+    // Open AddNoteModal with prefilled data
+    setShowAddNoteModal(true);
+  };
+
   const handleMoveNote = async () => {
     if (!note) return;
     
@@ -182,6 +193,11 @@ export const NoteEditor: React.FC = () => {
 
   const handlePlayback = () => {
     speakText(content);
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setUploadedFiles(prev => [...prev, ...files]);
   };
 
   const downloadAsPDF = () => {
@@ -465,6 +481,46 @@ export const NoteEditor: React.FC = () => {
             </div>
           )}
 
+          {/* File Upload Section for Editing */}
+          {isEditing && (
+            <div className="mb-4">
+              <label className="flex items-center justify-center space-x-2 text-purple-600 hover:text-purple-700 cursor-pointer bg-purple-50 hover:bg-purple-100 rounded-xl py-3 px-4 transition-all">
+                <Upload className="w-5 h-5" />
+                <span>Upload Media</span>
+                <input
+                  type="file"
+                  accept="*/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  multiple
+                />
+              </label>
+              
+              {uploadedFiles.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-sm text-gray-600 mb-2">New files:</p>
+                  <div className="space-y-1">
+                    {uploadedFiles.map((file, index) => (
+                      <div 
+                        key={index} 
+                        className="text-sm text-gray-700 bg-gray-100 px-3 py-1 rounded flex items-center justify-between"
+                      >
+                        <span>{file.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div>
             <div className="flex items-center justify-between mb-4">
               <div className="flex space-x-2">
@@ -524,6 +580,12 @@ export const NoteEditor: React.FC = () => {
               className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all font-semibold disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+            <button
+              onClick={handleSaveAsNew}
+              className="flex-1 bg-green-600 text-white py-3 rounded-xl hover:bg-green-700 transition-colors font-semibold"
+            >
+              Save as New Note
             </button>
             <button
               onClick={() => {
@@ -599,6 +661,23 @@ export const NoteEditor: React.FC = () => {
         onClose={() => setShowPublishModal(false)}
         content={content}
         title={title}
+      />
+
+      {/* Add Note Modal with prefilled data */}
+      <AddNoteModal
+        isOpen={showAddNoteModal}
+        onClose={() => setShowAddNoteModal(false)}
+        onNoteCreated={() => {
+          setShowAddNoteModal(false);
+          navigate('/');
+        }}
+        prefilledData={{
+          title,
+          content,
+          personalityId: note?.personalityId._id,
+          folderId: note?.folderId?._id,
+          attachments: uploadedFiles
+        }}
       />
     </div>
   );

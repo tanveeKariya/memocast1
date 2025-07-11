@@ -15,7 +15,8 @@ import {
   Edit3,
   Trash2,
   Eye,
-  Share2
+  Share2,
+  FolderPlus
 } from 'lucide-react';
 import { notesAPI, foldersAPI, personalitiesAPI, authAPI } from '../services/api';
 import { CreateFolderModal } from './CreateFolderModal';
@@ -407,6 +408,19 @@ export const HomeScreen: React.FC = () => {
         {/* Category Cards */}
         {view === 'folders' ? (
           <div>
+            {/* Create Project Button */}
+            {(selectedPersonality || personalities.length > 0) && (
+              <div className="mb-6">
+                <button
+                  onClick={() => setShowCreateFolder(true)}
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-2xl hover:from-green-600 hover:to-emerald-700 transition-all font-semibold flex items-center justify-center space-x-2"
+                >
+                  <FolderPlus className="w-5 h-5" />
+                  <span>Create New Project</span>
+                </button>
+              </div>
+            )}
+
             {filteredFolders.length === 0 ? (
               /* Empty State */
               <div className="text-center py-16">

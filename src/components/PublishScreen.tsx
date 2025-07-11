@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, ChevronRight, FileText, Mic } from 'lucide-react';
+import { ArrowLeft, Plus, ChevronRight, FileText, Mic, Home, Upload } from 'lucide-react';
 import { EnhancedPublishModal } from './EnhancedPublishModal';
 import { DraftsModal } from './DraftsModal';
 import { draftsAPI } from '../services/api';
@@ -155,11 +155,11 @@ export const PublishScreen: React.FC = () => {
             onClick={() => navigate('/')}
             className="flex flex-col items-center space-y-1"
           >
-            <div className="w-6 h-6 text-gray-400">🏠</div>
+            <Home className="w-6 h-6 text-gray-400" />
             <span className="text-xs text-gray-400">Home</span>
           </button>
           <button className="flex flex-col items-center space-y-1">
-            <div className="w-6 h-6 text-purple-600">📤</div>
+            <Upload className="w-6 h-6 text-purple-600" />
             <span className="text-xs text-purple-600 font-medium">Publish</span>
             <div className="w-6 h-1 bg-purple-600 rounded-full"></div>
           </button>

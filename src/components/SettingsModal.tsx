@@ -389,80 +389,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
                   whileTap={{ scale: 0.9 }}
                 >
                   <Edit3 className="w-4 h-4" />
-                </motion.button>
-                <motion.button 
-                  onClick={() => handleDeletePersonality(personality._id)}
-                  className="p-2 text-gray-600 hover:text-red-600 transition-colors"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </motion.button>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Add/Edit Personality Form */}
-      <AnimatePresence>
-        {(showPersonalityForm || editingPersonality) && (
-          <motion.div 
-            className="bg-white border border-gray-200 rounded-xl p-4"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <h4 className="font-semibold text-gray-900 mb-4">
-              {editingPersonality ? 'Edit Identity' : 'Add New Identity'}
-            </h4>
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Identity name"
-                value={personalityForm.name}
-                onChange={(e) => setPersonalityForm({...personalityForm, name: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white text-gray-900"
-              />
-              <input
-                type="text"
-                placeholder="Icon (emoji)"
-                value={personalityForm.icon}
-                onChange={(e) => setPersonalityForm({...personalityForm, icon: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white text-gray-900"
-              />
-              <textarea
-                placeholder="Description"
-                rows={3}
-                value={personalityForm.description}
-                onChange={(e) => setPersonalityForm({...personalityForm, description: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none bg-white text-gray-900"
-              />
-              <div className="flex space-x-3">
-                <motion.button 
-                  onClick={editingPersonality ? handleUpdatePersonality : handleCreatePersonality}
-                  className="flex-1 bg-purple-600 text-white py-3 rounded-xl hover:bg-purple-700 transition-colors"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {editingPersonality ? 'Update' : 'Create'}
-                </motion.button>
-                <motion.button
-                  onClick={() => {
-                    setShowPersonalityForm(false);
-                    setEditingPersonality(null);
-                    setPersonalityForm({ name: '', icon: '👤', description: '', color: '#8B5CF6' });
-                  }}
-                  className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl hover:bg-gray-400 transition-colors"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Cancel
-                </motion.button>
-              </div>
-            </div>
-          </motion.div>
+          <CreatePersonalityModal
+            isOpen={true}
+            onClose={() => {
+              setShowPersonalityForm(false);
+              setEditingPersonality(null);
+              setPersonalityForm({ name: '', icon: '👤', description: '', color: '#8B5CF6' });
+            }}
+            onPersonalityCreated={() => {
+              setShowPersonalityForm(false);
+              setEditingPersonality(null);
+              setPersonalityForm({ name: '', icon: '👤', description: '', color: '#8B5CF6' });
+              loadPersonalities();
+              onSettingsUpdated();
+            }}
+            editingPersonality={editingPersonality}
+          />
         )}
       </AnimatePresence>
     </motion.div>

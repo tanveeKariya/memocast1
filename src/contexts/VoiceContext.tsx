@@ -9,6 +9,7 @@ interface VoiceContextType {
   speakText: (text: string) => void;
   clearTranscript: () => void;
   error: string | null;
+  stopSpeaking: () => void;
 }
 
 const VoiceContext = createContext<VoiceContextType | undefined>(undefined);
@@ -147,6 +148,11 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, []);
 
+  const stopSpeaking = useCallback(() => {
+    if (synthRef.current) {
+      synthRef.current.cancel();
+    }
+  }, []);
   const clearTranscript = useCallback(() => {
     setTranscript('');
     finalTranscriptRef.current = '';
@@ -160,6 +166,7 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     startRecording,
     stopRecording,
     speakText,
+    stopSpeaking,
     clearTranscript,
     error
   };

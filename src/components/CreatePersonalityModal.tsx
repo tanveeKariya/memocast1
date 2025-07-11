@@ -6,6 +6,7 @@ interface CreatePersonalityModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPersonalityCreated: () => void;
+  editingPersonality?: any;
 }
 
 const iconOptions = [
@@ -19,7 +20,8 @@ const iconOptions = [
 export const CreatePersonalityModal: React.FC<CreatePersonalityModalProps> = ({ 
   isOpen, 
   onClose, 
-  onPersonalityCreated 
+  onPersonalityCreated,
+  editingPersonality
 }) => {
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('👤');
@@ -28,18 +30,36 @@ export const CreatePersonalityModal: React.FC<CreatePersonalityModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [showIconDropdown, setShowIconDropdown] = useState(false);
 
+  useEffect(() => {
+    if (editingPersonality) {
+      setName(editingPersonality.name);
+      setIcon(editingPersonality.icon);
+      setDescription(editingPersonality.description);
+      setColor(editingPersonality.color);
+    }
+  }, [editingPersonality]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !description.trim()) return;
 
     setLoading(true);
     try {
-      await personalitiesAPI.createPersonality({
+      if (editingPersonality) {
+        await personalitiesAPI.updatePersonality(editingPersonality._id, {
+          name,
+          icon,
+          description,
+          color
+        });
+      } else {
+        await personalitiesAPI.createPersonality({
         name,
         icon,
         description,
         color
       });
+      }
       
       // Reset form
       setName('');
@@ -62,7 +82,9 @@ export const CreatePersonalityModal: React.FC<CreatePersonalityModalProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-6 w-full max-w-md">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">Create Identity</h2>
+          <h2 className="text-xl font-semibold text-gray-900">
+            {editingPersonality ? 'Edit Identity' : 'Create Identity'}
+          </h2>
           <button
             onClick={onClose}
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
@@ -165,7 +187,7 @@ export const CreatePersonalityModal: React.FC<CreatePersonalityModalProps> = ({
             disabled={loading || !name.trim() || !description.trim()}
             className="w-full bg-purple-600 text-white py-3 rounded-xl hover:bg-purple-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Creating...' : 'Create Identity'}
+            {loading ? (editingPersonality ? 'Updating...' : 'Creating...') : (editingPersonality ? 'Update Identity' : 'Create Identity')}
           </button>
         </form>
       </div>

@@ -315,14 +315,27 @@ export const HomeScreen: React.FC = () => {
         {/* Search Bar */}
         {showSearch && (
           <div className="mb-6">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search notes and projects..."
-              className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm rounded-xl border border-white/20 focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
-              autoFocus
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search notes and projects..."
+                className="w-full px-4 py-3 pr-12 bg-white/80 backdrop-blur-sm rounded-xl border border-white/20 focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
+                autoFocus
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setShowSearch(false);
+                  }}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -444,7 +457,7 @@ export const HomeScreen: React.FC = () => {
               </div>
             ) : (
               /* Folders Grid */
-              <div className="space-y-4">
+              <div className="space-y-4 pb-32">
                 {filteredFolders.map((folder, index) => (
                   <div
                     key={folder._id}
@@ -474,7 +487,7 @@ export const HomeScreen: React.FC = () => {
                         </button>
                         
                         {showFolderMenu === folder._id && (
-                          <div className="absolute right-0 top-12 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-10">
+                          <div className="absolute right-0 top-12 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 min-w-[150px]">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -502,14 +515,15 @@ export const HomeScreen: React.FC = () => {
                                 <Share2 className="w-4 h-4 text-gray-500" />
                                 <span>Share</span>
                               </button>
-                              <div className="absolute left-full top-0 ml-2 hidden group-hover:block bg-white border border-gray-200 rounded-lg shadow-lg p-2 min-w-[120px]">
+                              <div className="absolute left-full top-0 ml-2 hidden group-hover:block bg-white border border-gray-200 rounded-lg shadow-lg p-2 min-w-[120px] z-50">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleShareFolder(folder, 'linkedin');
                                   }}
-                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm"
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm flex items-center space-x-2"
                                 >
+                                  <span>💼</span>
                                   LinkedIn
                                 </button>
                                 <button
@@ -517,8 +531,9 @@ export const HomeScreen: React.FC = () => {
                                     e.stopPropagation();
                                     handleShareFolder(folder, 'twitter');
                                   }}
-                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm"
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm flex items-center space-x-2"
                                 >
+                                  <span>🐦</span>
                                   Twitter
                                 </button>
                                 <button
@@ -526,8 +541,9 @@ export const HomeScreen: React.FC = () => {
                                     e.stopPropagation();
                                     handleShareFolder(folder, 'instagram');
                                   }}
-                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm"
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm flex items-center space-x-2"
                                 >
+                                  <span>📸</span>
                                   Instagram
                                 </button>
                               </div>

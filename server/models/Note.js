@@ -69,7 +69,7 @@ const noteSchema = new mongoose.Schema({
   enhancedVersions: [{
     platform: {
       type: String,
-      enum: ['linkedin', 'twitter', 'instagram']
+      enum: ['linkedin', 'twitter', 'instagram', 'general']
     },
     content: String,
     createdAt: {

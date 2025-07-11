@@ -21,12 +21,14 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
   const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
   const [availableNotes, setAvailableNotes] = useState<any[]>([]);
   const [availableProjects, setAvailableProjects] = useState<any[]>([]);
+  const [allNotes, setAllNotes] = useState<any[]>([]);
+  const [selectedNotesFromAll, setSelectedNotesFromAll] = useState<any[]>([]);
   const [personalities, setPersonalities] = useState<any[]>([]);
   const [enhancedContent, setEnhancedContent] = useState('');
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
-  const [step, setStep] = useState<'form' | 'enhance' | 'review' | 'publish'>('form');
+  const [step, setStep] = useState<'form' | 'selection' | 'enhance' | 'review' | 'publish'>('form');
   const [combinedContent, setCombinedContent] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredNotes, setFilteredNotes] = useState<any[]>([]);
@@ -61,11 +63,13 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       loadData();
+      loadAllNotes();
       setStep('form');
       setPublishName('');
       setSelectedPersonality('');
       setSelectedProject('');
       setSelectedNotes([]);
+      setSelectedNotesFromAll([]);
       setEnhancedContent('');
       setCombinedContent('');
       setSearchQuery('');
@@ -94,6 +98,15 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
       setPersonalities(personalitiesRes.data);
     } catch (error) {
       console.error('Error loading data:', error);
+    }
+  };
+
+  const loadAllNotes = async () => {
+    try {
+      const response = await notesAPI.getNotes();
+      setAllNotes(response.data);
+    } catch (error) {
+      console.error('Error loading all notes:', error);
     }
   };
 
@@ -149,10 +162,30 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
   };
 
   const handleFormSubmit = () => {
-    if (!publishName.trim() || !selectedPersonality || selectedNotes.length === 0) return;
+    if (!publishName.trim() || !selectedPersonality) return;
     
-    const selected = availableNotes.filter(note => selectedNotes.includes(note._id));
-    const combined = selected.map(note => `${note.title}\n\n${note.content}`).join('\n\n---\n\n');
+    setStep('selection');
+  };
+
+  const handleNoteSelectionFromAll = (note: any) => {
+    setSelectedNotesFromAll(prev => {
+      const exists = prev.find(n => n._id === note._id);
+      if (exists) {
+        return prev.filter(n => n._id !== note._id);
+      } else {
+        return [...prev, note];
+      }
+    });
+  };
+
+  const removeSelectedNote = (noteId: string) => {
+    setSelectedNotesFromAll(prev => prev.filter(n => n._id !== noteId));
+  };
+
+  const proceedToEnhance = () => {
+    if (selectedNotesFromAll.length === 0) return;
+    
+    const combined = selectedNotesFromAll.map(note => `${note.title}\n\n${note.content}`).join('\n\n---\n\n');
     setCombinedContent(combined);
     setStep('enhance');
   };
@@ -285,7 +318,7 @@ Swipe to see more insights! 👉
         type: showPortfolioOptions ? portfolioType : 'social',
         platform: showPortfolioOptions ? 'general' : selectedPlatform,
         personalityId: selectedPersonality,
-        originalNotes: selectedNotes,
+        originalNotes: selectedNotesFromAll.map(note => note._id),
         isPublished: true,
         publishedAt: new Date()
       });
@@ -452,15 +485,113 @@ Swipe to see more insights! 👉
               )}
 
               <p className="text-sm text-gray-500">
-                {selectedNotes.length} items selected.
+                Ready to select notes from all your content.
               </p>
 
               <button
                 onClick={handleFormSubmit}
-                disabled={!publishName.trim() || !selectedPersonality || selectedNotes.length === 0}
+                disabled={!publishName.trim() || !selectedPersonality}
                 className="w-full bg-purple-600 text-white py-3 rounded-xl hover:bg-purple-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Publish now
+                Select Notes
+              </button>
+            </div>
+          )}
+
+          {step === 'selection' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Select Notes to Publish</h3>
+                <button
+                  onClick={() => setStep('form')}
+                  className="text-purple-600 hover:text-purple-700"
+                >
+                  Back
+                </button>
+              </div>
+              
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search all notes..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white text-gray-900 w-full"
+                />
+              </div>
+
+              {/* Selected Notes */}
+              {selectedNotesFromAll.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Selected Notes ({selectedNotesFromAll.length})</h4>
+                  <div className="space-y-2 max-h-32 overflow-y-auto bg-purple-50 rounded-lg p-3">
+                    {selectedNotesFromAll.map((note) => (
+                      <div key={note._id} className="flex items-center justify-between bg-white rounded-lg p-2">
+                        <div className="flex-1">
+                          <h5 className="font-medium text-gray-900 text-sm">{note.title}</h5>
+                          <p className="text-xs text-gray-600">{note.personalityId.name} • {note.folderId?.name || 'No Project'}</p>
+                        </div>
+                        <button
+                          onClick={() => removeSelectedNote(note._id)}
+                          className="p-1 text-red-500 hover:text-red-700"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* All Notes */}
+              <div className="max-h-64 overflow-y-auto space-y-2 border border-gray-300 rounded-xl p-3">
+                {allNotes
+                  .filter(note => 
+                    !searchQuery || 
+                    note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    note.content.toLowerCase().includes(searchQuery.toLowerCase())
+                  )
+                  .map((note) => {
+                    const isSelected = selectedNotesFromAll.find(n => n._id === note._id);
+                    return (
+                      <div 
+                        key={note._id}
+                        className={`p-3 rounded-lg cursor-pointer transition-all ${
+                          isSelected
+                            ? 'bg-purple-50 border-purple-300 border-2'
+                            : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                        }`}
+                        onClick={() => handleNoteSelectionFromAll(note)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900">{note.title}</h4>
+                            <p className="text-sm text-gray-600 line-clamp-1">
+                              {note.content.substring(0, 50)}...
+                            </p>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <span className="text-xs text-purple-600">{note.personalityId.icon} {note.personalityId.name}</span>
+                              {note.folderId && (
+                                <span className="text-xs text-gray-500">📁 {note.folderId.name}</span>
+                              )}
+                            </div>
+                          </div>
+                          {isSelected && (
+                            <Check className="w-5 h-5 text-purple-600" />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+
+              <button
+                onClick={proceedToEnhance}
+                disabled={selectedNotesFromAll.length === 0}
+                className="w-full bg-purple-600 text-white py-3 rounded-xl hover:bg-purple-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Continue with {selectedNotesFromAll.length} notes
               </button>
             </div>
           )}
@@ -470,7 +601,7 @@ Swipe to see more insights! 👉
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Combined Content</h3>
                 <button
-                  onClick={() => setStep('form')}
+                  onClick={() => setStep('selection')}
                   className="text-purple-600 hover:text-purple-700"
                 >
                   Back
@@ -620,25 +751,23 @@ Swipe to see more insights! 👉
               </div>
 
               <div className="flex space-x-3">
-                {!showPortfolioOptions && (
-                  <button
-                    onClick={handlePublish}
-                    disabled={isPublishing}
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all font-semibold disabled:opacity-50 flex items-center justify-center"
-                  >
-                    {isPublishing ? (
-                      <>
-                        <Loader className="w-5 h-5 animate-spin mr-2" />
-                        Publishing...
-                      </>
-                    ) : (
-                      <>
-                        <Share2 className="w-5 h-5 mr-2" />
-                        Publish Now
-                      </>
-                    )}
-                  </button>
-                )}
+                <button
+                  onClick={handlePublish}
+                  disabled={isPublishing || showPortfolioOptions}
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all font-semibold disabled:opacity-50 flex items-center justify-center"
+                >
+                  {isPublishing ? (
+                    <>
+                      <Loader className="w-5 h-5 animate-spin mr-2" />
+                      Publishing...
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-5 h-5 mr-2" />
+                      {showPortfolioOptions ? 'Download Portfolio' : 'Publish Now'}
+                    </>
+                  )}
+                </button>
                 <button
                   onClick={handleSaveAsDraft}
                   disabled={isSavingDraft}

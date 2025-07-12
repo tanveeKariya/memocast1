@@ -202,11 +202,11 @@ export const DraftsModal: React.FC<DraftsModalProps> = ({ isOpen, onClose }) => 
                           <button className="p-2 text-gray-600 hover:text-green-600 transition-colors">
                             <Share2 className="w-4 h-4" />
                           </button>
-                          <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block bg-white border border-gray-200 rounded-lg shadow-lg p-2 min-w-[120px] z-50">
+                          <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block bg-white border border-gray-200 rounded-lg shadow-xl p-2 min-w-[140px] z-[9999]">
                             <button
                               onClick={() => handleShareDraft(draft, 'linkedin')}
                               disabled={isPublishing}
-                              className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm flex items-center space-x-2"
+                              className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm flex items-center space-x-2"
                             >
                               <span>💼</span>
                               <span>LinkedIn</span>
@@ -214,7 +214,7 @@ export const DraftsModal: React.FC<DraftsModalProps> = ({ isOpen, onClose }) => 
                             <button
                               onClick={() => handleShareDraft(draft, 'twitter')}
                               disabled={isPublishing}
-                              className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm flex items-center space-x-2"
+                              className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm flex items-center space-x-2"
                             >
                               <span>🐦</span>
                               <span>Twitter</span>
@@ -222,7 +222,7 @@ export const DraftsModal: React.FC<DraftsModalProps> = ({ isOpen, onClose }) => 
                             <button
                               onClick={() => handleShareDraft(draft, 'instagram')}
                               disabled={isPublishing}
-                              className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded text-sm flex items-center space-x-2"
+                              className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded text-sm flex items-center space-x-2"
                             >
                               <span>📸</span>
                               <span>Instagram</span>

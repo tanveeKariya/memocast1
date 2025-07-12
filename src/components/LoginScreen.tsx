@@ -1,16 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useCallback } from 'react';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Mic, Eye, EyeOff, Loader } from 'lucide-react';
 import { OnboardingSlides } from './OnboardingSlides';
-
-declare global {
-  interface Window {
-    google: any;
-    gapi: any;
-  }
-}
 
 export const LoginScreen: React.FC = () => {
   const { login, register, demoLogin, googleLogin } = useAuth();
@@ -27,21 +21,15 @@ export const LoginScreen: React.FC = () => {
     password: ''
   });
 
-  // Use a ref to target the Google button div
-  const googleButtonRef = useRef<HTMLDivElement>(null);
-
-  // State to track if Google script is loaded and initialized successfully
-  const [isGoogleScriptReady, setIsGoogleScriptReady] = useState(false);
-
-  const handleGoogleResponse = useCallback(async (response: any) => {
+  const handleGoogleSuccess = useCallback(async (credentialResponse: any) => {
     setLoading(true);
     setError('');
 
     try {
-      if (!response.credential) {
+      if (!credentialResponse.credential) {
         throw new Error('No credential received from Google.');
       }
-      await googleLogin(response.credential);
+      await googleLogin(credentialResponse.credential);
       navigate('/');
     } catch (err: any) {
       console.error('Google login error:', err);
@@ -51,87 +39,9 @@ export const LoginScreen: React.FC = () => {
     }
   }, [googleLogin, navigate, setLoading, setError]);
 
-  useEffect(() => {
-    // Load Google Sign-In script
-    const loadGoogleScript = () => {
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-
-      script.onload = () => {
-        if (window.google) {
-          try {
-            // Initialize Google GSI library
-            window.google.accounts.id.initialize({
-              client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-              callback: handleGoogleResponse,
-              auto_select: false,
-              cancel_on_tap_outside: true,
-              use_fedcm_for_prompt: true,
-              ux_mode: 'popup',
-              context: 'signin'
-            });
-            setIsGoogleScriptReady(true);
-          } catch (error) {
-            console.error('Google initialization error:', error);
-            setError('Failed to initialize Google authentication.');
-          }
-        }
-      };
-
-      script.onerror = () => {
-        console.error('Failed to load Google Sign-In script');
-        setError('Failed to load Google authentication. Please try again.');
-      };
-
-      document.body.appendChild(script);
-
-      return () => {
-        if (document.body.contains(script)) {
-          document.body.removeChild(script);
-        }
-      };
-    };
-
-    const cleanup = loadGoogleScript();
-    return cleanup;
+  const handleGoogleError = useCallback(() => {
+    setError('Google authentication failed. Please try again.');
   }, []);
-
-  // useEffect to render the Google button when script is ready and ref is available
-  useEffect(() => {
-    if (isGoogleScriptReady && googleButtonRef.current && window.google) {
-      try {
-        // Clear the div content before rendering to avoid duplicates or re-render issues
-        googleButtonRef.current.innerHTML = '';
-        
-        // Re-initialize with current context
-        window.google.accounts.id.initialize({
-          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-          callback: handleGoogleResponse,
-          auto_select: false,
-          cancel_on_tap_outside: true,
-          use_fedcm_for_prompt: true,
-          ux_mode: 'popup',
-          context: isLogin ? 'signin' : 'signup'
-        });
-        
-        window.google.accounts.id.renderButton(
-          googleButtonRef.current,
-          {
-            theme: 'outline',
-            size: 'large',
-            width: '100%',
-            text: isLogin ? 'signin_with' : 'signup_with',
-          }
-        );
-        console.log("✅ Google Sign-In button rendered successfully.");
-      } catch (error) {
-        console.error("❌ Error rendering Google button:", error);
-        setError('Failed to render Google Sign-In button.');
-      }
-    }
-  }, [isGoogleScriptReady, isLogin, handleGoogleResponse]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,7 +128,14 @@ export const LoginScreen: React.FC = () => {
           {/* Social Login Buttons */}
           <div className="space-y-3 mb-6">
             {/* Google Login Button Container */}
-            <div id="google-signin-button" ref={googleButtonRef}></div>
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              theme="outline"
+              size="large"
+              width="100%"
+              text={isLogin ? 'signin_with' : 'signup_with'}
+            />
           </div>
 
           <div className="relative mb-6">

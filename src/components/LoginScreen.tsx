@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Mic, Eye, EyeOff, Loader } from 'lucide-react';
@@ -31,6 +32,24 @@ export const LoginScreen: React.FC = () => {
 
   // State to track if Google script is loaded and initialized successfully
   const [isGoogleScriptReady, setIsGoogleScriptReady] = useState(false);
+
+  const handleGoogleResponse = useCallback(async (response: any) => {
+    setLoading(true);
+    setError('');
+
+    try {
+      if (!response.credential) {
+        throw new Error('No credential received from Google.');
+      }
+      await googleLogin(response.credential);
+      navigate('/');
+    } catch (err: any) {
+      console.error('Google login error:', err);
+      setError(err.message || 'Google authentication failed');
+    } finally {
+      setLoading(false);
+    }
+  }, [googleLogin, navigate, setLoading, setError]);
 
   useEffect(() => {
     // Load Google Sign-In script
@@ -113,24 +132,6 @@ export const LoginScreen: React.FC = () => {
       }
     }
   }, [isGoogleScriptReady, isLogin, handleGoogleResponse]);
-
-  const handleGoogleResponse = async (response: any) => {
-    setLoading(true);
-    setError('');
-
-    try {
-      if (!response.credential) {
-        throw new Error('No credential received from Google.');
-      }
-      await googleLogin(response.credential);
-      navigate('/');
-    } catch (err: any) {
-      console.error('Google login error:', err);
-      setError(err.message || 'Google authentication failed');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

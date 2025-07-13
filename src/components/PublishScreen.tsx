@@ -84,7 +84,7 @@ export const PublishScreen: React.FC = () => {
         </div>
 
         {/* Publish History */}
-        <div>
+        <div className="pb-32">
           <div className="mb-6">
             <h3 className="text-xl font-bold text-gray-900 mb-2">Publish History</h3>
             <p className="text-gray-600 text-sm">
@@ -110,7 +110,7 @@ export const PublishScreen: React.FC = () => {
               </button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 pb-8">
               {publishHistory.map((item, index) => (
                 <div
                   key={item._id}

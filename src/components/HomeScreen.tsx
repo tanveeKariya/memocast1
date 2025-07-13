@@ -230,20 +230,23 @@ export const HomeScreen: React.FC = () => {
 
   const handleShareFolder = async (folder: Folder, platform: string) => {
     try {
-      // Copy content to clipboard and redirect
-      await copyToClipboard(`📁 ${folder.name} - Shared from Memocast.co`);
+      const shareContent = `📁 ${folder.name} - Shared from Memocast.co\n\nExplore my organized notes and insights!`;
+      
+      // Copy content to clipboard
+      await copyToClipboard(shareContent);
 
       let response;
 
       if (platform === 'linkedin') {
-        response = await authAPI.linkedinPost({ content: `📁 ${folder.name} - Shared from Memocast.co` });
+        response = await authAPI.linkedinPost({ content: shareContent });
       } else if (platform === 'twitter') {
-        response = await authAPI.twitterPost({ content: `📁 ${folder.name} - Shared from Memocast.co` });
+        response = await authAPI.twitterPost({ content: shareContent });
       } else if (platform === 'instagram') {
-        response = await authAPI.instagramPost({ content: `📁 ${folder.name} - Shared from Memocast.co` });
+        response = await authAPI.instagramPost({ content: shareContent });
       }
 
       if (response?.data.redirectUrl) {
+        console.log('Opening social platform with URL:', response.data.redirectUrl);
         window.open(response.data.redirectUrl, '_blank');
       }
 
@@ -509,7 +512,7 @@ export const HomeScreen: React.FC = () => {
                         </button>
 
                         {showFolderMenu === folder._id && (
-                          <div className="absolute right-0 top-12 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 min-w-[150px]">
+                          <div className="absolute right-0 top-12 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-[9999] min-w-[150px]">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -532,12 +535,35 @@ export const HomeScreen: React.FC = () => {
                               <Edit3 className="w-4 h-4 text-gray-500" />
                               <span>Edit</span>
                             </button>
-                            <div className="relative group">
-                              <button className="flex items-center space-x-2 px-4 py-2 hover:bg-gray-50 w-full text-left">
+                            <div className="relative">
+                              <button 
+                                className="flex items-center space-x-2 px-4 py-2 hover:bg-gray-50 w-full text-left"
+                                onMouseEnter={(e) => {
+                                  const submenu = e.currentTarget.nextElementSibling as HTMLElement;
+                                  if (submenu) submenu.style.display = 'block';
+                                }}
+                                onMouseLeave={(e) => {
+                                  setTimeout(() => {
+                                    const submenu = e.currentTarget.nextElementSibling as HTMLElement;
+                                    if (submenu && !submenu.matches(':hover')) {
+                                      submenu.style.display = 'none';
+                                    }
+                                  }, 100);
+                                }}
+                              >
                                 <Share2 className="w-4 h-4 text-gray-500" />
                                 <span>Share</span>
                               </button>
-                              <div className="absolute left-full top-0 ml-2 hidden group-hover:block bg-white border border-gray-200 rounded-lg shadow-lg p-2 min-w-[120px] z-50">
+                              <div 
+                                className="absolute left-full top-0 ml-2 hidden bg-white border border-gray-200 rounded-lg shadow-xl p-2 min-w-[120px] z-[9999]"
+                                style={{ display: 'none' }}
+                                onMouseEnter={(e) => {
+                                  (e.currentTarget as HTMLElement).style.display = 'block';
+                                }}
+                                onMouseLeave={(e) => {
+                                  (e.currentTarget as HTMLElement).style.display = 'none';
+                                }}
+                              >
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();

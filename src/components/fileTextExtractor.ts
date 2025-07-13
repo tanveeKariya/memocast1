@@ -1,4 +1,4 @@
-import * as pdfjsLib from 'pdfjs-dist/es5/build/pdf';
+import * as pdfjsLib from 'pdfjs-dist';
 
 import mammoth from 'mammoth';
 

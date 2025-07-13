@@ -41,7 +41,7 @@ export const authAPI = {
     api.post('/auth/google-login', data),
   linkedinLogin: (data: { code: string }) => 
     api.post('/auth/linkedin-login', data),
-  linkedinPost: (data: { content: string }) => 
+  linkedinPost: (data: { content: string; url?: string }) => 
     api.post('/auth/linkedin-post', data),
   twitterPost: (data: { content: string }) => 
     api.post('/auth/twitter-post', data),

@@ -1,34 +1,32 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinkedIn OAuth Callback</title>
-</head>
-<body>
-    <div style="text-align: center; padding: 50px;">
-        <h2>Processing LinkedIn authentication...</h2>
-        <p>Please wait while we complete your login.</p>
-    </div>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#8B5CF6" />
+    <meta name="description" content="AI-powered voice note-taking and organization app" />
     
-    <script>
-        // Extract code from URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const state = urlParams.get('state');
-        const error = urlParams.get('error');
-        
-        if (error) {
-            alert('LinkedIn authentication failed: ' + error);
-            window.close();
-        } else if (code && state === 'linkedin_auth') {
-            // Redirect back to main app with the code
-            window.location.href = `${window.location.origin}?code=${code}&state=${state}`;
-        } else {
-            // Invalid callback
-            alert('Invalid LinkedIn callback');
-            window.close();
-        }
-    </script>
-</body>
+    <!-- Open Graph Tags for LinkedIn Sharing -->
+    <meta property="og:title" content="Memocast.co - AI-Powered Voice Note-Taking App" />
+    <meta property="og:description" content="Transform your thoughts into powerful content with AI. Voice recording, smart organization, and social media publishing." />
+    <meta property="og:image" content="https://memocast.netlify.app/pwa-512x512.png" />
+    <meta property="og:url" content="https://memocast.netlify.app" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Memocast.co" />
+    
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Memocast.co - AI-Powered Voice Note-Taking App" />
+    <meta name="twitter:description" content="Transform your thoughts into powerful content with AI. Voice recording, smart organization, and social media publishing." />
+    <meta name="twitter:image" content="https://memocast.netlify.app/pwa-512x512.png" />
+    
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>Memocast.co - Voice Note-Taking App</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

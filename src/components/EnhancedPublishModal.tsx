@@ -328,6 +328,7 @@ Swipe to see more insights! 👉
       
       // Open social media platform after a short delay
       setTimeout(() => {
+        console.log('Opening LinkedIn with URL:', redirectUrl);
         if (redirectUrl) {
           window.open(redirectUrl, '_blank');
         }

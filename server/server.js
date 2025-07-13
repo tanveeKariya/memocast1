@@ -10,6 +10,7 @@ import folderRoutes from './routes/folders.js';
 import personalityRoutes from './routes/personalities.js';
 import draftRoutes from './routes/drafts.js';
 import uploadRoutes from './routes/upload.js';
+
 dotenv.config();
 console.log('--- Server Startup Log ---');
 console.log('Environment variables loaded.');
@@ -17,6 +18,33 @@ console.log('Environment variables loaded.');
 const app = express();
 const PORT = process.env.PORT || 5000;
 console.log(`Attempting to start server on port: ${PORT}`);
+
+// Keep-alive mechanism to prevent server from sleeping
+setInterval(() => {
+  console.log('🔄 Keep-alive ping:', new Date().toISOString());
+}, 14 * 60 * 1000); // Every 14 minutes
+
+// Graceful shutdown handling
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully');
+  process.exit(0);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // Don't exit the process, just log the error
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit the process, just log the error
+});
 
 // Security middleware
 console.log('Configuring security middleware (helmet, cors, rateLimit)...');
@@ -55,15 +83,40 @@ console.log('Body parsing middleware configured.');
 
 // MongoDB connection
 console.log(`Attempting to connect to MongoDB at: ${process.env.MONGODB_URI || 'mongodb://localhost:27017/memocast'}`);
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/memocast', {
+
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/memocast', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-})
-.then(() => console.log('✅ MongoDB connected successfully'))
-.catch(err => {
-  console.error('❌ MongoDB connection error:', err.message);
-  // Optionally, exit the process if DB connection is critical for startup
-  // process.exit(1);
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      bufferCommands: false
+      
+    });
+    console.log('✅ MongoDB connected successfully');
+  } catch (err) {
+    console.error('❌ MongoDB connection error:', err.message);
+    // Retry connection after 5 seconds
+    setTimeout(connectDB, 5000);
+  }
+};
+
+connectDB();
+
+// Handle MongoDB connection events
+mongoose.connection.on('disconnected', () => {
+  console.log('❌ MongoDB disconnected. Attempting to reconnect...');
+  connectDB();
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('❌ MongoDB connection error:', err);
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('✅ MongoDB reconnected successfully');
 });
 
 // Routes

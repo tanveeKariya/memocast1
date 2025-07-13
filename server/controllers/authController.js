@@ -251,8 +251,12 @@ export const linkedinPost = async (req, res) => {
   try {
     const { content } = req.body;
     
-    // Copy content to clipboard and redirect
-    const linkedinUrl = 'https://www.linkedin.com/feed/';
+    // For LinkedIn, we'll use the compose feature with prefilled text
+    const encodedContent = encodeURIComponent(content);
+    const linkedinUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodedContent}`;
+    
+    console.log('LinkedIn URL:', linkedinUrl);
+    console.log('Content to share:', content);
     
     res.json({ 
       success: true, 

@@ -160,7 +160,7 @@ export const OnboardingSlides: React.FC<OnboardingSlidesProps> = ({ onComplete }
           animate={{ scale: 1 }}
           transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
         >
-          <h1 className="text-3xl font-bold mb-2">Memocast.co</h1>
+          <h1 className="text-3xl font-bold mb-2">Memocast</h1>
         </motion.div>
 
         <AnimatePresence mode="wait">

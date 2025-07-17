@@ -275,8 +275,8 @@ export const twitterPost = async (req, res) => {
   try {
     const { content } = req.body;
     
-    // For Twitter, we'll redirect to Twitter's intent URL with prefilled content
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(content)}`;
+    // For Twitter, we'll redirect to Twitter's compose URL with prefilled content
+    const twitterUrl = `https://twitter.com/compose/tweet?text=${encodeURIComponent(content)}`;
     
     res.json({ 
       success: true, 
@@ -295,16 +295,19 @@ export const instagramPost = async (req, res) => {
   try {
     const { content } = req.body;
     
-    // For Instagram, we'll provide instructions to copy content
+    // For Instagram Stories, we'll redirect to Instagram with content copied
+    // Instagram doesn't support direct URL sharing with text, so we'll use the mobile web approach
+    const instagramUrl = 'https://www.instagram.com/create/story/';
+    
     res.json({ 
       success: true, 
-      redirectUrl: 'https://www.instagram.com/',
+      redirectUrl: instagramUrl,
       content: content,
-      message: 'Content copied to clipboard. Redirecting to Instagram...'
+      message: 'Content copied to clipboard. Redirecting to Instagram Stories...'
     });
   } catch (error) {
     console.error('Instagram post error:', error);
-    res.status(500).json({ message: 'Failed to prepare Instagram post' });
+    res.status(500).json({ message: 'Failed to prepare Instagram story' });
   }
 };
 

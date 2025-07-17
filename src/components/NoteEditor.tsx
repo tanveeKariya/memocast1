@@ -221,7 +221,7 @@ export const NoteEditor: React.FC = () => {
           file.type.startsWith('text/')) {
         setShowFileOptions(file);
       } else {
-        setUploadedFiles(prev => [...prev, file]);
+        saveFileAsAttachment(file);
       }
     });
   };

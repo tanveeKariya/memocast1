@@ -46,14 +46,14 @@ export const EnhancedPublishModal: React.FC<EnhancedPublishModalProps> = ({
     },
     { 
       id: 'twitter', 
-      name: 'Twitter', 
+      name: 'Twitter Post', 
       icon: '🐦',
       description: 'Short-form social media',
       maxLength: 280
     },
     { 
       id: 'instagram', 
-      name: 'Instagram', 
+      name: 'Instagram Story', 
       icon: '📸',
       description: 'Visual storytelling',
       maxLength: 2200

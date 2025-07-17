@@ -51,7 +51,7 @@ export const PublishScreen: React.FC = () => {
           />
           <div>
             <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Memocast.co
+              Memocast
             </h2>
           </div>
         </div>
@@ -79,7 +79,7 @@ export const PublishScreen: React.FC = () => {
             className="w-full bg-white/80 backdrop-blur-sm border border-purple-200 text-purple-600 py-4 rounded-2xl hover:bg-white transition-all font-semibold flex items-center justify-center space-x-2"
           >
             <FileText className="w-5 h-5" />
-            <span>Show Drafts</span>
+            <span>View All Drafts</span>
           </button>
         </div>
 

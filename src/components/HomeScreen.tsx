@@ -17,13 +17,15 @@ import {
   Eye,
   Share2,
   FolderPlus,
-  X // <--- Added missing import for X icon
+  X,
+  BookOpen
 } from 'lucide-react';
 import { notesAPI, foldersAPI, personalitiesAPI, authAPI } from '../services/api';
 import { CreateFolderModal } from './CreateFolderModal';
 import { AddNoteModal } from './AddNoteModal';
 import { SettingsModal } from './SettingsModal';
 import { CreatePersonalityModal } from './CreatePersonalityModal';
+import { DraftsModal } from './DraftsModal';
 
 // Assuming User interface is defined elsewhere, but including it here for completeness
 // based on previous interaction's correction for 'preferences'.
@@ -106,6 +108,7 @@ export const HomeScreen: React.FC = () => {
   const [showAddNote, setShowAddNote] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showCreatePersonality, setShowCreatePersonality] = useState(false);
+  const [showDraftsModal, setShowDraftsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [selectedPersonality, setSelectedPersonality] = useState<string>('');
@@ -294,7 +297,7 @@ export const HomeScreen: React.FC = () => {
             />
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                Memocast.co
+                Memocast
               </h1>
               <p className="text-sm text-gray-600">Welcome {user?.username}</p>
             </div>
@@ -419,7 +422,7 @@ export const HomeScreen: React.FC = () => {
 
         {/* View Toggle */}
         {!selectedFolder && (
-          <div className="flex bg-white/80 backdrop-blur-sm rounded-xl p-1 mb-6 w-fit">
+          <div className="flex bg-white/80 backdrop-blur-sm rounded-xl p-1 mb-6 w-fit relative">
             <button
               onClick={() => setView('folders')}
               className={`px-4 py-2 rounded-lg font-medium transition-all ${
@@ -439,6 +442,13 @@ export const HomeScreen: React.FC = () => {
               }`}
             >
               Notes
+            </button>
+            <button
+              onClick={() => setShowDraftsModal(true)}
+              className="px-4 py-2 rounded-lg font-medium transition-all text-gray-600 hover:text-gray-800 flex items-center space-x-1"
+            >
+              <BookOpen className="w-4 h-4" />
+              <span>Drafts</span>
             </button>
           </div>
         )}
@@ -741,6 +751,10 @@ export const HomeScreen: React.FC = () => {
         isOpen={showCreatePersonality}
         onClose={() => setShowCreatePersonality(false)}
         onPersonalityCreated={loadData}
+      />
+      <DraftsModal
+        isOpen={showDraftsModal}
+        onClose={() => setShowDraftsModal(false)}
       />
     </div>
   );

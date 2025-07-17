@@ -179,7 +179,7 @@ export const LoginScreen: React.FC = () => {
             <Mic className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-            Memocast.co
+            Memocast
           </h1>
           <p className="text-gray-600 mt-2">Your AI-powered voice note companion</p>
         </div>

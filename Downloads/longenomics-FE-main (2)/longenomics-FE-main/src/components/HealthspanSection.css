@@ -1,0 +1,189 @@
+:root {
+  --primary-blue: #006aff;
+  --text-dark: #222222;
+  --text-medium: #5a5a5a;
+  --bg-light-gray: #f9f9f9;
+  --white: #ffffff;
+}
+
+.lp-button {
+  border: none;
+  border-radius: 6px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  white-space: nowrap;
+}
+
+.lp-healthspan-section {
+  background-color: var(--bg-light-gray);
+  padding: 80px 48px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+}
+
+.lp-healthspan-content {
+  max-width: 800px;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lp-healthspan-title {
+  font-size: clamp(36px, 4.2vw, 68px);
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 24px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.lp-healthspan-description {
+  font-size: clamp(16px, 1.4vw, 24px);
+  color: var(--text-medium);
+  margin-bottom: 48px;
+  max-width: 700px;
+  line-height: 1.5;
+}
+
+.lp-healthspan-button {
+  background-color: var(--primary-blue);
+  color: var(--white);
+  padding: 18px 36px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.lp-healthspan-button:hover {
+  background-color: #0056cb;
+}
+
+.lp-healthspan-image-top-right,
+.lp-healthspan-image-bottom-left {
+  position: absolute;
+  z-index: 1;
+  width: clamp(200px, 20vw, 350px);
+  height: clamp(150px, 15vw, 250px);
+  opacity: 0.8;
+  pointer-events: none;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.lp-healthspan-image-top-right {
+  top: 5%;
+  right: 0%;
+}
+
+.lp-healthspan-image-bottom-left {
+  bottom: 5%;
+  left: 0%;
+}
+
+.placeholder-image {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.placeholder-image::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.1) 75%);
+  background-size: 20px 20px;
+}
+
+.placeholder-content {
+  text-align: center;
+  color: white;
+  z-index: 1;
+  position: relative;
+}
+
+.placeholder-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.placeholder-text {
+  font-size: 1rem;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+@media (max-width: 1024px) {
+  .lp-healthspan-section {
+    padding: 70px 30px;
+  }
+  .lp-healthspan-title {
+    font-size: clamp(32px, 5vw, 60px);
+  }
+  .lp-healthspan-description {
+    font-size: clamp(15px, 2vw, 22px);
+  }
+  .lp-healthspan-button {
+    padding: 15px 30px;
+    font-size: 17px;
+  }
+  .lp-healthspan-image-top-right,
+  .lp-healthspan-image-bottom-left {
+    width: clamp(150px, 15vw, 250px);
+    height: clamp(120px, 12vw, 200px);
+  }
+}
+
+@media (max-width: 768px) {
+  .lp-healthspan-section {
+    padding: 60px 20px;
+  }
+  .lp-healthspan-image-top-right,
+  .lp-healthspan-image-bottom-left {
+    display: none;
+  }
+  .lp-healthspan-title {
+    font-size: clamp(24px, 6vw, 40px);
+  }
+  .lp-healthspan-description {
+    font-size: clamp(15px, 3.5vw, 18px);
+  }
+  .lp-healthspan-button {
+    padding: 14px 28px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .lp-healthspan-section {
+    padding: 40px 15px;
+  }
+  .lp-healthspan-title {
+    font-size: 8vw;
+  }
+  .lp-healthspan-description {
+    font-size: 4vw;
+  }
+  .lp-healthspan-button {
+    padding: 12px 24px;
+    font-size: 15px;
+  }
+}
